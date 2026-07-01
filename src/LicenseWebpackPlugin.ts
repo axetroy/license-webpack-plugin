@@ -9,6 +9,7 @@ import { LicenseInfo, OutputItem } from './model/LicenseInfo';
 import { PackageScanner } from './scanner/PackageScanner';
 
 export type OutputFormat = 'txt' | 'json' | 'markdown' | 'html';
+export type OutputMode = 'per-compilation' | 'report-only' | 'aggregate';
 
 export interface LicenseWebpackPluginOptions {
   filename?: string;
@@ -28,6 +29,11 @@ export interface LicenseWebpackPluginOptions {
   deduplicateLicense?: boolean;
   cache?: boolean;
   workspaceRoot?: string;
+  buildName?: string;
+  outputMode?: OutputMode;
+  reportFile?: string;
+  aggregateKey?: string;
+  emitMergedAsset?: boolean;
 }
 
 const PLUGIN_NAME = 'LicenseWebpackPlugin';
@@ -55,6 +61,11 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       deduplicateLicense: options.deduplicateLicense !== false,
       cache: options.cache !== false,
       workspaceRoot: options.workspaceRoot || '',
+      buildName: options.buildName || '',
+      outputMode: options.outputMode || 'per-compilation',
+      reportFile: options.reportFile || '',
+      aggregateKey: options.aggregateKey || '',
+      emitMergedAsset: options.emitMergedAsset || false,
     };
     this.db = new LicenseDatabase();
   }
@@ -150,8 +161,14 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       items = items.sort((a, b) => a.package.name.localeCompare(b.package.name));
     }
 
-    const formatter = this.createFormatter();
-    compilation.emitAsset(this.options.filename, new sources.RawSource(formatter.generate(items)));
+    if (this.options.outputMode === 'report-only' || this.options.outputMode === 'aggregate') {
+      const reportAssetName = this.resolveReportFile();
+      const report = this.buildReport(items);
+      compilation.emitAsset(reportAssetName, new sources.RawSource(JSON.stringify(report, null, 2)));
+    } else {
+      const formatter = this.createFormatter();
+      compilation.emitAsset(this.options.filename, new sources.RawSource(formatter.generate(items)));
+    }
   }
 
   private filterLicenseFields(licenseInfo: LicenseInfo): LicenseInfo {
@@ -176,5 +193,35 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       default:
         return new TxtFormatter({ includeLicenseText: this.options.includeLicenseText });
     }
+  }
+
+  private resolveReportFile(): string {
+    if (this.options.reportFile) {
+      return this.options.reportFile;
+    }
+    const key = this.options.aggregateKey || this.options.buildName || 'report';
+    return `.license-webpack-plugin/${key}.json`;
+  }
+
+  private buildReport(items: OutputItem[]): Record<string, unknown> {
+    const report: Record<string, unknown> = {
+      generatedAt: new Date().toISOString(),
+      packages: items.map((item) => ({
+        name: item.package.name,
+        version: item.package.version,
+        license: item.license.license,
+        repository: item.license.repository,
+        homepage: item.license.homepage,
+        author: item.license.author,
+        licenseText: item.license.licenseText,
+      })),
+    };
+    if (this.options.buildName) {
+      report['buildName'] = this.options.buildName;
+    }
+    if (this.options.aggregateKey) {
+      report['aggregateKey'] = this.options.aggregateKey;
+    }
+    return report;
   }
 }

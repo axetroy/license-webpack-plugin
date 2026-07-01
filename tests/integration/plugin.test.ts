@@ -91,4 +91,123 @@ describe('LicenseWebpackPlugin integration', () => {
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed.some((item) => item.name === 'lodash')).toBe(true);
   });
+
+  it('report-only mode emits JSON report and not the textual license asset', async () => {
+    const outputPath = prepareOutputDir('report-only');
+
+    const stats = await runWebpack({
+      mode: 'development',
+      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      output: {
+        path: outputPath,
+        filename: 'bundle.js',
+      },
+      plugins: [
+        new LicenseWebpackPlugin({
+          outputMode: 'report-only',
+          workspaceRoot: path.resolve(__dirname, '../..'),
+        }),
+      ],
+    });
+
+    expect(stats.hasErrors()).toBe(false);
+    expect(fs.existsSync(path.join(outputPath, 'licenses.txt'))).toBe(false);
+    const reportFile = path.join(outputPath, '.license-webpack-plugin', 'report.json');
+    expect(fs.existsSync(reportFile)).toBe(true);
+    const report = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {
+      generatedAt: string;
+      packages: Array<{ name: string }>;
+    };
+    expect(typeof report.generatedAt).toBe('string');
+    expect(Array.isArray(report.packages)).toBe(true);
+    expect(report.packages.some((pkg) => pkg.name === 'lodash')).toBe(true);
+  });
+
+  it('report-only mode with buildName includes buildName in report and uses buildName as default key', async () => {
+    const outputPath = prepareOutputDir('report-only-buildname');
+
+    const stats = await runWebpack({
+      mode: 'development',
+      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      output: {
+        path: outputPath,
+        filename: 'bundle.js',
+      },
+      plugins: [
+        new LicenseWebpackPlugin({
+          outputMode: 'report-only',
+          buildName: 'my-app',
+          workspaceRoot: path.resolve(__dirname, '../..'),
+        }),
+      ],
+    });
+
+    expect(stats.hasErrors()).toBe(false);
+    const reportFile = path.join(outputPath, '.license-webpack-plugin', 'my-app.json');
+    expect(fs.existsSync(reportFile)).toBe(true);
+    const report = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {
+      buildName: string;
+      packages: Array<{ name: string }>;
+    };
+    expect(report.buildName).toBe('my-app');
+  });
+
+  it('report-only mode with custom reportFile uses provided path', async () => {
+    const outputPath = prepareOutputDir('report-only-custom');
+
+    const stats = await runWebpack({
+      mode: 'development',
+      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      output: {
+        path: outputPath,
+        filename: 'bundle.js',
+      },
+      plugins: [
+        new LicenseWebpackPlugin({
+          outputMode: 'report-only',
+          reportFile: 'custom/licenses-report.json',
+          workspaceRoot: path.resolve(__dirname, '../..'),
+        }),
+      ],
+    });
+
+    expect(stats.hasErrors()).toBe(false);
+    const reportFile = path.join(outputPath, 'custom', 'licenses-report.json');
+    expect(fs.existsSync(reportFile)).toBe(true);
+    const report = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {
+      packages: Array<{ name: string }>;
+    };
+    expect(Array.isArray(report.packages)).toBe(true);
+  });
+
+  it('aggregate mode with aggregateKey includes aggregateKey in report', async () => {
+    const outputPath = prepareOutputDir('aggregate');
+
+    const stats = await runWebpack({
+      mode: 'development',
+      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      output: {
+        path: outputPath,
+        filename: 'bundle.js',
+      },
+      plugins: [
+        new LicenseWebpackPlugin({
+          outputMode: 'aggregate',
+          aggregateKey: 'renderer',
+          workspaceRoot: path.resolve(__dirname, '../..'),
+        }),
+      ],
+    });
+
+    expect(stats.hasErrors()).toBe(false);
+    expect(fs.existsSync(path.join(outputPath, 'licenses.txt'))).toBe(false);
+    const reportFile = path.join(outputPath, '.license-webpack-plugin', 'renderer.json');
+    expect(fs.existsSync(reportFile)).toBe(true);
+    const report = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {
+      aggregateKey: string;
+      packages: Array<{ name: string }>;
+    };
+    expect(report.aggregateKey).toBe('renderer');
+    expect(Array.isArray(report.packages)).toBe(true);
+  });
 });
