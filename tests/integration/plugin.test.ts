@@ -95,7 +95,7 @@ describe('LicenseWebpackPlugin integration', () => {
   // The two tests below exercise includeLicenseText using lodash, a real open-source
   // package already present in the repository's devDependencies.  lodash has a
   // well-known MIT license whose text begins with "Copyright OpenJS Foundation".
-  it('includes dependency license text when includeLicenseText is true (lodash)', async () => {
+  it('includes dependency license text when includeLicenseText is true', async () => {
     const workspaceRoot = path.resolve(__dirname, '../..');
     const outputPath = prepareOutputDir('include-license-text-true');
 
@@ -127,7 +127,7 @@ describe('LicenseWebpackPlugin integration', () => {
     expect(content).toContain('Copyright OpenJS Foundation');
   });
 
-  it('omits dependency license text when includeLicenseText is false (lodash)', async () => {
+  it('omits dependency license text when includeLicenseText is false', async () => {
     const workspaceRoot = path.resolve(__dirname, '../..');
     const outputPath = prepareOutputDir('include-license-text-false');
 
