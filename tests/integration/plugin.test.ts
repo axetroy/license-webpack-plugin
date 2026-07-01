@@ -5,9 +5,11 @@ import { LicenseWebpackPlugin } from '../../dist/LicenseWebpackPlugin';
 
 jest.setTimeout(60000);
 
-function runWebpack(config: webpack.Configuration): Promise<webpack.Stats> {
+function runWebpack(config: webpack.Configuration | webpack.Configuration[]): Promise<webpack.Stats | webpack.MultiStats> {
   return new Promise((resolve, reject) => {
-    const compiler = webpack(config);
+    const compiler = Array.isArray(config)
+      ? webpack(config as webpack.Configuration[])
+      : webpack(config as webpack.Configuration);
     compiler.run((err, stats) => {
       if (err) {
         reject(err);
@@ -90,5 +92,61 @@ describe('LicenseWebpackPlugin integration', () => {
     const parsed = JSON.parse(content) as Array<{ name: string }>;
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed.some((item) => item.name === 'lodash')).toBe(true);
+  });
+
+  it('merges license output across multi-compiler builds into one file', async () => {
+    const outputPath = prepareOutputDir('multi-compiler');
+
+    const stats = await runWebpack([
+      {
+        name: 'client',
+        mode: 'development',
+        entry: path.resolve(__dirname, 'fixtures/entry.js'),
+        output: {
+          path: outputPath,
+          filename: 'client.bundle.js',
+        },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'client-licenses.txt',
+            mergedFilename: 'licenses-merged.txt',
+            format: 'txt',
+            mergeAcrossCompilers: true,
+            mergeKey: 'integration-test-merge',
+            workspaceRoot: path.resolve(__dirname, '../..'),
+          }),
+        ],
+      },
+      {
+        name: 'server',
+        mode: 'development',
+        entry: path.resolve(__dirname, 'fixtures/entry.js'),
+        output: {
+          path: outputPath,
+          filename: 'server.bundle.js',
+        },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'server-licenses.txt',
+            mergedFilename: 'licenses-merged.txt',
+            format: 'txt',
+            mergeAcrossCompilers: true,
+            mergeKey: 'integration-test-merge',
+            workspaceRoot: path.resolve(__dirname, '../..'),
+          }),
+        ],
+      },
+    ]);
+
+    expect(stats.hasErrors()).toBe(false);
+    const mergedFile = path.join(outputPath, 'licenses-merged.txt');
+    expect(fs.existsSync(path.join(outputPath, 'client.bundle.js'))).toBe(true);
+    expect(fs.existsSync(path.join(outputPath, 'server.bundle.js'))).toBe(true);
+    expect(fs.existsSync(mergedFile)).toBe(true);
+    expect(fs.existsSync(path.join(outputPath, 'client-licenses.txt'))).toBe(false);
+    expect(fs.existsSync(path.join(outputPath, 'server-licenses.txt'))).toBe(false);
+    const content = fs.readFileSync(mergedFile, 'utf-8');
+    expect(content).toContain('# THIRD-PARTY LICENSES');
+    expect(content).toContain('lodash');
   });
 });

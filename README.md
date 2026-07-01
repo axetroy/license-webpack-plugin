@@ -55,6 +55,10 @@ module.exports = {
 | `deduplicateLicense` | `boolean` | `true` | Suppress repeated license text bodies |
 | `cache` | `boolean` | `true` | Reuse the in-memory license database |
 | `workspaceRoot` | `string` | `compiler.context` | Root path passed to license-checker |
+| `mergeAcrossCompilers` | `boolean` | `false` | Merge outputs from multiple compilers in one Node process |
+| `mergeKey` | `string` | `workspaceRoot \|\| compiler.context` | Group compilers that should share one merged output |
+| `mergeWhenAllCompilersDone` | `boolean` | `true` when `mergeAcrossCompilers` is true | Delay merged output until the whole compiler group completes |
+| `mergedFilename` | `string` | `filename` | Output filename used for merged multi-compiler output |
 
 ## Output formats
 
