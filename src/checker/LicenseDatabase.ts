@@ -103,9 +103,9 @@ export class LicenseDatabase {
 
   private runLicenseCheckerInSubprocess(startPath: string): Promise<LicenseCheckerResult> {
     const script = [
-      "const checker = require('license-checker-rseidelsohn');",
+      "import { init } from 'license-checker-rseidelsohn';",
       'const options = JSON.parse(process.argv[1]);',
-      'checker.init(options, (err, packages) => {',
+      'init(options, (err, packages) => {',
       '  if (err) {',
       '    console.error(err instanceof Error ? err.message : String(err));',
       '    process.exit(1);',
@@ -123,7 +123,7 @@ export class LicenseDatabase {
     });
 
     return new Promise((resolve, reject) => {
-      execFile(process.execPath, ['-e', script, options], { maxBuffer: 20 * 1024 * 1024 }, (error, stdout, stderr) => {
+      execFile(process.execPath, ['--input-type=module', '-e', script, options], { maxBuffer: 20 * 1024 * 1024 }, (error, stdout, stderr) => {
         if (error) {
           reject(new Error(stderr || error.message));
           return;
