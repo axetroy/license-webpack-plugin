@@ -225,9 +225,12 @@ function getRepositoryUrl(repository: string | object | undefined): string | und
       .replace(/^git\+ssh:\/\//, 'https://')
       .replace(/\.git$/, '');
     // Handle git+ssh://git@hostname:path format (SCP-like syntax)
-    // e.g., git+ssh://git@github.com:user/repo.git -> https://github.com/user/repo
-    if (url.match(/^https:\/\/[^/]+:./)) {
-      url = url.replace(/^https:\/\/([^/]+):\//, 'https://$1/');
+    // e.g., git+ssh://git@github.com:user/repo -> https://github.com/user/repo
+    // After previous replacements, URL looks like: https://github.com:user/repo
+    // We need to convert the colon to a slash
+    const scpMatch = url.match(/^https:\/\/([^:/]+):(.+)$/);
+    if (scpMatch) {
+      url = `https://${scpMatch[1]}/${scpMatch[2]}`;
     }
     return url;
   }
