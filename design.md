@@ -848,4 +848,3 @@ Licenses.txt / JSON / Markdown / HTML
 ```
 
 通过模块化设计、缓存机制、多格式输出、License 去重、Monorepo 支持及合规校验等能力，该插件能够满足从个人项目到企业级商业软件发布的开源许可证管理需求，并为未来扩展至 SBOM、SPDX、CycloneDX 等软件供应链场景奠定基础。
-gg

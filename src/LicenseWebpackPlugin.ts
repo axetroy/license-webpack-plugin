@@ -211,10 +211,11 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
 
       const normalizedLicense = { ...licenseInfo };
       if (this.options.deduplicateLicense && normalizedLicense.licenseText) {
-        if (seenLicenseTexts.has(normalizedLicense.licenseText)) {
+        const text = normalizedLicense.licenseText;
+        if (seenLicenseTexts.has(text)) {
           normalizedLicense.licenseText = undefined;
         } else {
-          seenLicenseTexts.add(normalizedLicense.licenseText);
+          seenLicenseTexts.add(text);
         }
       }
 
