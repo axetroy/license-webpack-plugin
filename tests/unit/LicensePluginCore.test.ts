@@ -1,0 +1,215 @@
+import { LicensePluginCore, type LicensePluginContext } from '../../src/LicensePluginCore';
+import { type PackageInfo } from '../../src/model/PackageInfo';
+import { LicenseDatabase } from '../../src/checker/LicenseDatabase';
+
+jest.mock('../../src/checker/LicenseDatabase');
+
+const MockLicenseDatabase = LicenseDatabase as jest.MockedClass<typeof LicenseDatabase>;
+
+const mockContext: LicensePluginContext = {
+  reportError: jest.fn(),
+  reportWarning: jest.fn(),
+};
+
+function makePackage(name: string, version: string): PackageInfo {
+  return {
+    name,
+    version,
+    path: `/node_modules/${name}`,
+    packageJsonPath: `/node_modules/${name}/package.json`,
+    chunks: ['main'],
+    modules: [],
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  MockLicenseDatabase.prototype.initialize.mockResolvedValue(undefined);
+});
+
+describe('LicensePluginCore — compound license strings', () => {
+  it('preserves OR expression in license field', async () => {
+    MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+      license: '(MIT OR CC0-1.0)',
+    });
+    const core = new LicensePluginCore({ workspaceRoot: '/test' });
+    await core.initialize('/test', mockContext);
+
+    const packages = new Map<string, PackageInfo>();
+    packages.set('type-fest@0.21.3', makePackage('type-fest', '0.21.3'));
+
+    const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+    expect(errors).toEqual([]);
+    expect(items).toHaveLength(1);
+    expect(items[0].license.license).toBe('(MIT OR CC0-1.0)');
+  });
+
+  it('preserves AND expression from array licenses', async () => {
+    MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+      license: 'MIT AND Apache-2.0',
+    });
+    const core = new LicensePluginCore({ workspaceRoot: '/test' });
+    await core.initialize('/test', mockContext);
+
+    const packages = new Map<string, PackageInfo>();
+    packages.set('dual@1.0.0', makePackage('dual', '1.0.0'));
+
+    const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+    expect(errors).toEqual([]);
+    expect(items).toHaveLength(1);
+    expect(items[0].license.license).toBe('MIT AND Apache-2.0');
+  });
+
+  describe('onlyAllow with compound licenses', () => {
+    it('fails OR expression when individual licenses are in allow list (exact match required)', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: '(MIT OR Apache-2.0)',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT', 'Apache-2.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+    });
+
+    it('fails OR expression when exact compound string not in allow list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: '(MIT OR Apache-2.0)',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+    });
+
+    it('allows AND expression when exact compound string is in allow list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'MIT AND Apache-2.0',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT AND Apache-2.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+    });
+
+    it('fails AND expression when exact compound string not in allow list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'MIT AND Apache-2.0',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('MIT AND Apache-2.0');
+    });
+  });
+
+  describe('failOn with compound licenses', () => {
+    it('fails OR expression when exact compound string matches fail list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: '(MIT OR Apache-2.0)',
+      });
+      const core = new LicensePluginCore({
+        failOn: ['(MIT OR Apache-2.0)'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+    });
+
+    it('passes OR expression when compound string does not match fail list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: '(MIT OR CC0-1.0)',
+      });
+      const core = new LicensePluginCore({
+        failOn: ['Apache-2.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+    });
+
+    it('fails AND expression when exact compound string matches fail list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'MIT AND Apache-2.0',
+      });
+      const core = new LicensePluginCore({
+        failOn: ['MIT AND Apache-2.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('MIT AND Apache-2.0');
+    });
+
+    it('passes AND expression when compound string does not match fail list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'MIT AND Apache-2.0',
+      });
+      const core = new LicensePluginCore({
+        failOn: ['GPL-3.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+    });
+  });
+});
