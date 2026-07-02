@@ -203,10 +203,12 @@ export class LicensePluginCore {
   }
 
   private filterLicenseFields(licenseInfo: LicenseInfo): LicenseInfo {
-    return {
-      ...licenseInfo,
-      licenseText: this.options.includeLicenseText ? licenseInfo.licenseText : undefined,
-    };
+    const result: LicenseInfo = { license: licenseInfo.license };
+    if (licenseInfo.licenseFile) result.licenseFile = licenseInfo.licenseFile;
+    if (this.options.includeLicenseText && licenseInfo.licenseText) {
+      result.licenseText = licenseInfo.licenseText;
+    }
+    return result;
   }
 
   private createFormatter(): Formatter {

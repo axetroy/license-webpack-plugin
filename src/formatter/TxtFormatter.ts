@@ -5,8 +5,7 @@ export interface TxtFormatterOptions {
   includeLicenseText?: boolean;
 }
 
-// Lightweight validation to detect common email strings without enforcing full RFC rules.
-const AUTHOR_EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
 
 export class TxtFormatter implements Formatter {
   constructor(private readonly options: TxtFormatterOptions = {}) {}
@@ -51,18 +50,9 @@ export class TxtFormatter implements Formatter {
 
   private formatAuthor(author: string): string {
     const match = author.match(/^(.*)\s*<([^>]+)>$/);
-    if (!match) {
-      const candidate = author.trim();
-      return AUTHOR_EMAIL_PATTERN.test(candidate) ? `<a>${candidate}</a>` : candidate;
-    }
-
-    const candidate = match[2].trim();
-    if (!AUTHOR_EMAIL_PATTERN.test(candidate)) {
-      return author;
-    }
-
+    if (!match) return author.trim();
     const name = match[1].trim();
-    // Keep this exact shape to match the requested output contract: `name <a>email</a>`.
-    return name ? `${name} <a>${candidate}</a>` : `<a>${candidate}</a>`;
+    const email = match[2].trim();
+    return name ? `${name} <a>${email}</a>` : `<a>${email}</a>`;
   }
 }

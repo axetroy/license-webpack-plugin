@@ -16,7 +16,7 @@ export class LicenseCache {
   }
 
   getAll(): Map<string, LicenseInfo> {
-    return this.cache;
+    return new Map(this.cache);
   }
 
   clear(): void {

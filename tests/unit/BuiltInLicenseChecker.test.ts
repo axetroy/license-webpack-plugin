@@ -489,19 +489,24 @@ Redistribution and use...`;
   });
 
   describe('excludePrivatePackages option', () => {
-    it('excludes scoped packages when excludePrivatePackages is true', (done) => {
-      const scopeDir = path.join(tempDir, 'node_modules', '@private', 'private-pkg');
-      fs.mkdirSync(scopeDir, { recursive: true });
-      fs.writeFileSync(path.join(scopeDir, 'package.json'), JSON.stringify({
-        name: '@private/private-pkg',
-        version: '1.0.0',
-        license: 'MIT',
-      }));
+    it('excludes packages with private: true when excludePrivatePackages is true', (done) => {
+      createPackage('private-pkg', '1.0.0', { license: 'MIT', private: true });
       createPackage('public-pkg', '1.0.0', { license: 'MIT' });
       builtInLicenseChecker({ start: tempDir, excludePrivatePackages: true }, (err, packages) => {
         expect(err).toBeNull();
-        expect(packages['@private/private-pkg@1.0.0']).toBeUndefined();
+        expect(packages['private-pkg@1.0.0']).toBeUndefined();
         expect(packages['public-pkg@1.0.0']).toBeDefined();
+        done();
+      });
+    });
+
+    it('includes packages without private: true when excludePrivatePackages is true', (done) => {
+      createPackage('public-pkg', '1.0.0', { license: 'MIT' });
+      createPackage('@scope/public-pkg', '1.0.0', { license: 'MIT' });
+      builtInLicenseChecker({ start: tempDir, excludePrivatePackages: true }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['public-pkg@1.0.0']).toBeDefined();
+        expect(packages['@scope/public-pkg@1.0.0']).toBeDefined();
         done();
       });
     });

@@ -11,7 +11,7 @@ interface VitePlugin {
   enforce?: 'pre' | 'post';
   buildStart?: () => void | Promise<void>;
   transform?: (code: string, id: string) => string | null | undefined | void;
-  generateBundle?: (opts: unknown, bundle: unknown) => void | Promise<void>;
+  generateBundle?: (this: { emitFile: (opts: { type: string; fileName: string; source: string }) => void }, opts: unknown, bundle: unknown) => void | Promise<void>;
 }
 
 export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugin {
@@ -46,7 +46,7 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
       return null;
     },
 
-    async generateBundle() {
+    async generateBundle(this: { emitFile: (opts: { type: string; fileName: string; source: string }) => void }, _opts: unknown, _bundle: unknown) {
       if (resolvedPackages.size === 0) return;
 
       const warnings: string[] = [];
@@ -58,7 +58,7 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
       const { items } = await core.generateLicenseItems(resolvedPackages, context);
       const source = core.format(items);
 
-      (this as unknown as { emitFile: (opts: { type: string; fileName: string; source: string }) => void }).emitFile({
+      this.emitFile({
         type: 'asset',
         fileName: core.options.filename,
         source,

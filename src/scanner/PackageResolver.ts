@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { PackageInfo } from '../model/PackageInfo';
+import { normalizeRepositoryUrl, parseAuthor } from '../checker/BuiltInLicenseChecker';
 
 export class PackageResolver {
   resolve(modulePath: string, chunkName: string): PackageInfo | null {
@@ -51,31 +52,15 @@ export class PackageResolver {
       let repository: string | undefined;
       if (pkg.repository) {
         if (typeof pkg.repository === 'string') {
-          repository = pkg.repository
-            .replace(/^git\+https:\/\//, 'https://')
-            .replace(/^git:\/\//, 'https://')
-            .replace(/^git\+ssh:\/\/git@/, 'https://')
-            .replace(/^git\+ssh:\/\//, 'https://')
-            .replace(/\.git$/, '');
+          repository = normalizeRepositoryUrl(pkg.repository);
         } else if (typeof pkg.repository === 'object' && pkg.repository.url) {
-          repository = pkg.repository.url;
+          repository = normalizeRepositoryUrl(pkg.repository.url);
         }
       }
 
-      let author: string | undefined;
-      let publisher: string | undefined;
-      if (pkg.author) {
-        if (typeof pkg.author === 'string') {
-          const match = pkg.author.match(/^(.+?)(?:\s*<([^>]+)>)?$/);
-          if (match) {
-            publisher = match[1].trim();
-            author = match[2] ? `${match[1].trim()} <${match[2]}>` : match[1].trim();
-          }
-        } else if (typeof pkg.author === 'object') {
-          publisher = pkg.author.name;
-          author = pkg.author.email ? `${pkg.author.name} <${pkg.author.email}>` : pkg.author.name;
-        }
-      }
+      const parsed = parseAuthor(pkg.author);
+      const publisher = parsed.name;
+      const author = parsed.email ? `${parsed.name || ''} <${parsed.email}>`.trim() : parsed.name;
 
       return {
         name: pkg.name || packageName,

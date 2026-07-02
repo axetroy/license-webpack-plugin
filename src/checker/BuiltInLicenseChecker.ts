@@ -155,17 +155,24 @@ function getLicenseString(license: string | object | undefined): string | undefi
 }
 
 /**
+ * Normalize a repository URL string to HTTPS format.
+ */
+export function normalizeRepositoryUrl(repo: string): string {
+  return repo
+    .replace(/^git\+https:\/\//, 'https://')
+    .replace(/^git:\/\//, 'https://')
+    .replace(/^git\+ssh:\/\/git@/, 'https://')
+    .replace(/^git\+ssh:\/\//, 'https://')
+    .replace(/\.git$/, '');
+}
+
+/**
  * Get repository URL from repository field
  */
 function getRepositoryUrl(repository: string | object | undefined): string | undefined {
   if (!repository) return undefined;
   if (typeof repository === 'string') {
-    let url = repository
-      .replace(/^git\+https:\/\//, 'https://')
-      .replace(/^git:\/\//, 'https://')
-      .replace(/^git\+ssh:\/\/git@/, 'https://')
-      .replace(/^git\+ssh:\/\//, 'https://')
-      .replace(/\.git$/, '');
+    let url = normalizeRepositoryUrl(repository);
     // Handle git+ssh://git@hostname:path format (SCP-like syntax)
     // e.g., git+ssh://git@github.com:user/repo -> https://github.com/user/repo
     // After previous replacements, URL looks like: https://github.com:user/repo
@@ -183,20 +190,20 @@ function getRepositoryUrl(repository: string | object | undefined): string | und
 }
 
 /**
- * Get author string from author field
+ * Parse author field from package.json into name and email.
  */
-function getAuthorString(author: string | object | undefined): { publisher?: string; email?: string } {
+export function parseAuthor(author: string | object | undefined): { name?: string; email?: string } {
   if (!author) return {};
   if (typeof author === 'string') {
     const match = author.match(/^(.+?)(?:\s*<([^>]+)>)?$/);
     if (match) {
-      return { publisher: match[1].trim(), email: match[2] };
+      return { name: match[1].trim(), email: match[2] };
     }
-    return { publisher: author };
+    return { name: author };
   }
   if (typeof author === 'object' && 'name' in author) {
     const a = author as { name?: string; email?: string };
-    return { publisher: a.name, email: a.email };
+    return { name: a.name, email: a.email };
   }
   return {};
 }
@@ -273,7 +280,7 @@ export function builtInLicenseChecker(
 
       if (!packageJson) continue;
 
-      if (options.excludePrivatePackages && packageJson.name?.startsWith('@')) {
+      if (options.excludePrivatePackages && packageJson.private === true) {
         continue;
       }
 
@@ -301,7 +308,7 @@ export function builtInLicenseChecker(
         }
       }
 
-      const authorInfo = getAuthorString(packageJson.author);
+      const authorInfo = parseAuthor(packageJson.author);
 
       const name = packageJson.name || path.basename(packagePath);
       const version = packageJson.version || '0.0.0';
@@ -315,7 +322,7 @@ export function builtInLicenseChecker(
         licenseText,
         copyright,
         repository: getRepositoryUrl(packageJson.repository),
-        publisher: authorInfo.publisher,
+        publisher: authorInfo.name,
         email: authorInfo.email,
         url: packageJson.homepage,
         private: packageJson.private === true,

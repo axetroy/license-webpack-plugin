@@ -5,7 +5,6 @@ exports[`LicensePluginCore — compound license strings custom / non-standard li
   {
     "license": {
       "license": "Custom",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -35,7 +34,6 @@ exports[`LicensePluginCore — compound license strings custom / non-standard li
   {
     "license": {
       "license": "Custom",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -59,7 +57,6 @@ exports[`LicensePluginCore — compound license strings custom / non-standard li
   {
     "license": {
       "license": "Custom",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -83,7 +80,6 @@ exports[`LicensePluginCore — compound license strings custom / non-standard li
   {
     "license": {
       "license": "Custom",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -113,7 +109,6 @@ exports[`LicensePluginCore — compound license strings custom / non-standard li
   {
     "license": {
       "license": "",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -149,7 +144,6 @@ exports[`LicensePluginCore — compound license strings failOn with compound lic
   {
     "license": {
       "license": "MIT AND Apache-2.0",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -173,7 +167,6 @@ exports[`LicensePluginCore — compound license strings failOn with compound lic
   {
     "license": {
       "license": "(MIT OR CC0-1.0)",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -209,7 +202,6 @@ exports[`LicensePluginCore — compound license strings multi-version licenses r
   {
     "license": {
       "license": "MIT",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -228,7 +220,6 @@ exports[`LicensePluginCore — compound license strings multi-version licenses r
   {
     "license": {
       "license": "UNKNOWN",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -252,7 +243,6 @@ exports[`LicensePluginCore — compound license strings multi-version licenses r
   {
     "license": {
       "license": "MIT",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -271,7 +261,6 @@ exports[`LicensePluginCore — compound license strings multi-version licenses r
   {
     "license": {
       "license": "GPL-3.0",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -295,7 +284,6 @@ exports[`LicensePluginCore — compound license strings onlyAllow with compound 
   {
     "license": {
       "license": "MIT AND Apache-2.0",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -337,7 +325,6 @@ exports[`LicensePluginCore — compound license strings preserves AND expression
   {
     "license": {
       "license": "MIT AND Apache-2.0",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
@@ -361,7 +348,6 @@ exports[`LicensePluginCore — compound license strings preserves OR expression 
   {
     "license": {
       "license": "(MIT OR CC0-1.0)",
-      "licenseText": undefined,
     },
     "package": {
       "author": undefined,
