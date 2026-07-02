@@ -24,13 +24,13 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
 
     enforce: 'post',
 
-    buildStart() {
+    async buildStart() {
       const root = options.workspaceRoot || process.cwd();
       const context = {
         reportError: (msg: string) => { throw new Error(msg); },
         reportWarning: (msg: string) => console.warn(`[${PLUGIN_NAME}] ${msg}`),
       };
-      core.initialize(root, context);
+      await core.initialize(root, context);
     },
 
     transform(_code: string, id: string) {

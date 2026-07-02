@@ -4,8 +4,8 @@ import { builtInLicenseChecker } from '../../../src/checker/BuiltInLicenseChecke
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
 describe('real packages – builtInLicenseChecker', () => {
-  it('detects lodash license', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('detects lodash license', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const lodashKey = Object.keys(packages).find((k) => k.startsWith('lodash@'));
     expect(lodashKey).toBeDefined();
     const pkg = packages[lodashKey!];
@@ -15,8 +15,8 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.path).toBeDefined();
   });
 
-  it('detects lodash license with license text', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT, customFormat: { licenseText: true } });
+  it('detects lodash license with license text', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT, customFormat: { licenseText: true } });
     const lodashKey = Object.keys(packages).find((k) => k.startsWith('lodash@'));
     expect(lodashKey).toBeDefined();
     const pkg = packages[lodashKey!];
@@ -26,8 +26,8 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.licenseFile).toBeDefined();
   });
 
-  it('detects webpack license', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('detects webpack license', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const webpackKey = Object.keys(packages).find((k) => k.startsWith('webpack@'));
     expect(webpackKey).toBeDefined();
     const pkg = packages[webpackKey!];
@@ -35,8 +35,8 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.name).toBe('webpack');
   });
 
-  it('detects webpack-sources license', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('detects webpack-sources license', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const wsKey = Object.keys(packages).find((k) => k.startsWith('webpack-sources@'));
     expect(wsKey).toBeDefined();
     const pkg = packages[wsKey!];
@@ -44,8 +44,8 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.name).toBe('webpack-sources');
   });
 
-  it('detects typescript license', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('detects typescript license', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const tsKey = Object.keys(packages).find((k) => k.startsWith('typescript@'));
     expect(tsKey).toBeDefined();
     const pkg = packages[tsKey!];
@@ -53,8 +53,8 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.name).toBe('typescript');
   });
 
-  it('detects multiple known packages', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('detects multiple known packages', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const keys = Object.keys(packages);
     expect(keys.length).toBeGreaterThan(10);
 
@@ -64,16 +64,16 @@ describe('real packages – builtInLicenseChecker', () => {
     }
   });
 
-  it('extracts repository URL for lodash', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('extracts repository URL for lodash', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     const lodashKey = Object.keys(packages).find((k) => k.startsWith('lodash@'));
     expect(lodashKey).toBeDefined();
     const pkg = packages[lodashKey!];
     expect(pkg.repository).toContain('lodash/lodash');
   });
 
-  it('extracts copyright for lodash from license file', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT, customFormat: { licenseText: true } });
+  it('extracts copyright for lodash from license file', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT, customFormat: { licenseText: true } });
     const lodashKey = Object.keys(packages).find((k) => k.startsWith('lodash@'));
     expect(lodashKey).toBeDefined();
     const pkg = packages[lodashKey!];
@@ -81,13 +81,13 @@ describe('real packages – builtInLicenseChecker', () => {
     expect(pkg.licenseText).toContain('Copyright OpenJS Foundation');
   });
 
-  it('does not produce errors for real project node_modules', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT });
+  it('does not produce errors for real project node_modules', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT });
     expect(Object.keys(packages).length).toBeGreaterThan(0);
   });
 
-  it('excludes nothing when excludePrivatePackages is false', () => {
-    const packages = builtInLicenseChecker({ start: PROJECT_ROOT, excludePrivatePackages: false });
+  it('excludes nothing when excludePrivatePackages is false', async () => {
+    const packages = await builtInLicenseChecker({ start: PROJECT_ROOT, excludePrivatePackages: false });
     expect(Object.keys(packages).length).toBeGreaterThan(0);
   });
 });

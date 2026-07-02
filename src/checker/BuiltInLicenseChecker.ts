@@ -1,9 +1,4 @@
-/**
- * Built-in license checker - zero dependency implementation
- * Replaces license-checker-rseidelsohn functionality
- */
-
-import * as fs from 'fs';
+import { readFile, readdir, stat } from 'fs/promises';
 import * as path from 'path';
 import spdxExpressionParse from 'spdx-expression-parse';
 
@@ -29,7 +24,6 @@ export interface PackageLicenseInfo {
   copyright?: string;
 }
 
-// License file basename patterns in precedence order
 const LICENSE_BASENAMES = [
   /^LICENSE$/i,
   /^LICENSE\-\w+$/i,
@@ -40,7 +34,6 @@ const LICENSE_BASENAMES = [
   /^COPYRIGHT$/i,
 ];
 
-// Regex patterns for detecting licenses in file content
 type LicensePattern = [RegExp, string];
 const LICENSE_PATTERNS: LicensePattern[] = [
   [/permission is hereby granted, free of charge, to any person obtaining a copy of this software/i, 'MIT*'],
@@ -59,16 +52,11 @@ const LICENSE_PATTERNS: LicensePattern[] = [
   [/do what the f\*ck you want to public license/i, 'WTFPL*'],
 ];
 
-// Copyright detection regex
 const COPYRIGHT_PATTERNS = [
   /©?\s*copyright\s+(?:\(c\)\s*)?(\d{4}(?:\s*-\s*\d{4})?)\s+([^\n\r]+)/gi,
   /©\s*(\d{4}(?:\s*-\s*\d{4})?)\s+([^\n\r]+)/gi,
 ];
 
-/**
- * Check if a license string is a valid SPDX expression. Returns the original
- * string if valid, or "Custom" for non-standard license declarations.
- */
 export function normalizeLicense(license: string): string {
   try {
     spdxExpressionParse(license);
@@ -78,9 +66,6 @@ export function normalizeLicense(license: string): string {
   }
 }
 
-/**
- * Extract copyright information from license file content
- */
 function extractCopyright(content: string): string | undefined {
   const copyrightLines: string[] = [];
 
@@ -103,17 +88,18 @@ function extractCopyright(content: string): string | undefined {
   return undefined;
 }
 
-/**
- * Find license file in a package directory
- */
-function findLicenseFile(packageDir: string): string | null {
+async function findLicenseFile(packageDir: string): Promise<string | null> {
   try {
-    const files = fs.readdirSync(packageDir);
+    const files = await readdir(packageDir);
     const candidates: Array<{ file: string; order: number }> = [];
 
     for (const file of files) {
       const fullPath = path.join(packageDir, file);
-      if (!fs.statSync(fullPath).isFile()) continue;
+      try {
+        if (!(await stat(fullPath)).isFile()) continue;
+      } catch {
+        continue;
+      }
 
       for (let i = 0; i < LICENSE_BASENAMES.length; i++) {
         if (LICENSE_BASENAMES[i].test(file)) {
@@ -130,21 +116,19 @@ function findLicenseFile(packageDir: string): string | null {
   }
 }
 
-/**
- * Read and process package.json
- */
-function readPackageJson(packageJsonPath: string): { name?: string; version?: string; license?: string | object; licenses?: string | object[]; repository?: string | object; author?: string | object; homepage?: string; private?: boolean } | null {
+async function readPackageJson(packageJsonPath: string): Promise<{
+  name?: string; version?: string; license?: string | object;
+  licenses?: string | object[]; repository?: string | object;
+  author?: string | object; homepage?: string; private?: boolean
+} | null> {
   try {
-    const content = fs.readFileSync(packageJsonPath, 'utf-8');
+    const content = await readFile(packageJsonPath, 'utf-8');
     return JSON.parse(content);
   } catch {
     return null;
   }
 }
 
-/**
- * Get string value from license field (can be string or { type: string })
- */
 function getLicenseString(license: string | object | undefined): string | undefined {
   if (!license) return undefined;
   if (typeof license === 'string') return license;
@@ -154,9 +138,6 @@ function getLicenseString(license: string | object | undefined): string | undefi
   return undefined;
 }
 
-/**
- * Normalize a repository URL string to HTTPS format.
- */
 export function normalizeRepositoryUrl(repo: string): string {
   return repo
     .replace(/^git\+https:\/\//, 'https://')
@@ -166,17 +147,10 @@ export function normalizeRepositoryUrl(repo: string): string {
     .replace(/\.git$/, '');
 }
 
-/**
- * Get repository URL from repository field
- */
 function getRepositoryUrl(repository: string | object | undefined): string | undefined {
   if (!repository) return undefined;
   if (typeof repository === 'string') {
     let url = normalizeRepositoryUrl(repository);
-    // Handle git+ssh://git@hostname:path format (SCP-like syntax)
-    // e.g., git+ssh://git@github.com:user/repo -> https://github.com/user/repo
-    // After previous replacements, URL looks like: https://github.com:user/repo
-    // We need to convert the colon to a slash
     const scpMatch = url.match(/^https:\/\/([^:/]+):(.+)$/);
     if (scpMatch) {
       url = `https://${scpMatch[1]}/${scpMatch[2]}`;
@@ -189,9 +163,6 @@ function getRepositoryUrl(repository: string | object | undefined): string | und
   return undefined;
 }
 
-/**
- * Parse author field from package.json into name and email.
- */
 export function parseAuthor(author: string | object | undefined): { name?: string; email?: string } {
   if (!author) return {};
   if (typeof author === 'string') {
@@ -208,19 +179,18 @@ export function parseAuthor(author: string | object | undefined): { name?: strin
   return {};
 }
 
-/**
- * Traverse node_modules to find packages
- */
-function findPackages(startPath: string): string[] {
+async function findPackages(startPath: string): Promise<string[]> {
   const packages: string[] = [];
   const nodeModulesPath = path.join(startPath, 'node_modules');
 
-  if (!fs.existsSync(nodeModulesPath)) {
+  try {
+    await stat(nodeModulesPath);
+  } catch {
     return packages;
   }
 
   try {
-    const entries = fs.readdirSync(nodeModulesPath, { withFileTypes: true });
+    const entries = await readdir(nodeModulesPath, { withFileTypes: true });
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -229,23 +199,27 @@ function findPackages(startPath: string): string[] {
       if (entry.name.startsWith('@')) {
         const scopeDir = path.join(nodeModulesPath, entry.name);
         try {
-          const scopeEntries = fs.readdirSync(scopeDir, { withFileTypes: true });
+          const scopeEntries = await readdir(scopeDir, { withFileTypes: true });
           for (const scopeEntry of scopeEntries) {
             if (!scopeEntry.isDirectory()) continue;
-            const packagePath = path.join(scopeDir, scopeEntry.name);
-            const packageJson = path.join(packagePath, 'package.json');
-            if (fs.existsSync(packageJson)) {
-              packages.push(packagePath);
+            const pkgPath = path.join(scopeDir, scopeEntry.name);
+            try {
+              await stat(path.join(pkgPath, 'package.json'));
+              packages.push(pkgPath);
+            } catch {
+              // Skip packages without package.json
             }
           }
         } catch {
           // Ignore errors
         }
       } else {
-        const packagePath = path.join(nodeModulesPath, entry.name);
-        const packageJson = path.join(packagePath, 'package.json');
-        if (fs.existsSync(packageJson)) {
-          packages.push(packagePath);
+        const pkgPath = path.join(nodeModulesPath, entry.name);
+        try {
+          await stat(path.join(pkgPath, 'package.json'));
+          packages.push(pkgPath);
+        } catch {
+          // Skip packages without package.json
         }
       }
     }
@@ -256,62 +230,48 @@ function findPackages(startPath: string): string[] {
   return packages;
 }
 
-/**
- * Built-in license checker implementation
- */
-export function builtInLicenseChecker(
+async function processPackage(
+  packagePath: string,
   options: LicenseCheckerOptions
-): Record<string, PackageLicenseInfo> {
-  const packages: Record<string, PackageLicenseInfo> = {};
-  const startPath = path.resolve(options.start);
+): Promise<[string, PackageLicenseInfo] | null> {
+  const packageJson = await readPackageJson(path.join(packagePath, 'package.json'));
+  if (!packageJson) return null;
 
-  if (!fs.existsSync(startPath)) {
-    throw new Error(`Path does not exist: ${startPath}`);
+  if (options.excludePrivatePackages && packageJson.private === true) {
+    return null;
   }
 
-  const packagePaths = findPackages(startPath);
-
-  for (const packagePath of packagePaths) {
-    const packageJsonPath = path.join(packagePath, 'package.json');
-    const packageJson = readPackageJson(packageJsonPath);
-
-    if (!packageJson) continue;
-
-    if (options.excludePrivatePackages && packageJson.private === true) {
-      continue;
+  let licenses: string | string[] | undefined;
+  if (packageJson.license) {
+    licenses = getLicenseString(packageJson.license);
+  } else if (packageJson.licenses) {
+    if (Array.isArray(packageJson.licenses)) {
+      licenses = packageJson.licenses.map((l) => getLicenseString(l) || 'UNKNOWN').filter(Boolean) as string[];
+    } else {
+      licenses = getLicenseString(packageJson.licenses);
     }
+  }
 
-    let licenses: string | string[] | undefined;
-    if (packageJson.license) {
-      licenses = getLicenseString(packageJson.license);
-    } else if (packageJson.licenses) {
-      if (Array.isArray(packageJson.licenses)) {
-        licenses = packageJson.licenses.map((l) => getLicenseString(l) || 'UNKNOWN').filter(Boolean) as string[];
-      } else {
-        licenses = getLicenseString(packageJson.licenses);
-      }
+  const licenseFile = await findLicenseFile(packagePath);
+  let licenseText: string | undefined;
+  let copyright: string | undefined;
+
+  if (licenseFile && options.customFormat?.licenseText) {
+    try {
+      licenseText = await readFile(licenseFile, 'utf-8');
+      copyright = extractCopyright(licenseText);
+    } catch {
+      // Ignore errors
     }
+  }
 
-    const licenseFile = findLicenseFile(packagePath);
-    let licenseText: string | undefined;
-    let copyright: string | undefined;
+  const authorInfo = parseAuthor(packageJson.author);
+  const name = packageJson.name || path.basename(packagePath);
+  const version = packageJson.version || '0.0.0';
 
-    if (licenseFile && options.customFormat?.licenseText) {
-      try {
-        licenseText = fs.readFileSync(licenseFile, 'utf-8');
-        copyright = extractCopyright(licenseText);
-      } catch {
-        // Ignore errors
-      }
-    }
-
-    const authorInfo = parseAuthor(packageJson.author);
-
-    const name = packageJson.name || path.basename(packagePath);
-    const version = packageJson.version || '0.0.0';
-    const key = `${name}@${version}`;
-
-    packages[key] = {
+  return [
+    `${name}@${version}`,
+    {
       name,
       version,
       licenses,
@@ -324,7 +284,29 @@ export function builtInLicenseChecker(
       url: packageJson.homepage,
       private: packageJson.private === true,
       path: packagePath,
-    };
+    },
+  ];
+}
+
+export async function builtInLicenseChecker(
+  options: LicenseCheckerOptions
+): Promise<Record<string, PackageLicenseInfo>> {
+  const startPath = path.resolve(options.start);
+
+  try {
+    await stat(startPath);
+  } catch {
+    throw new Error(`Path does not exist: ${startPath}`);
+  }
+
+  const packagePaths = await findPackages(startPath);
+  const results = await Promise.all(packagePaths.map((pkgPath) => processPackage(pkgPath, options)));
+
+  const packages: Record<string, PackageLicenseInfo> = {};
+  for (const result of results) {
+    if (result) {
+      packages[result[0]] = result[1];
+    }
   }
 
   return packages;

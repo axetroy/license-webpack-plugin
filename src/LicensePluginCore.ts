@@ -101,13 +101,13 @@ export class LicensePluginCore {
     this.db = new LicenseDatabase();
   }
 
-  initialize(startPath: string, context: LicensePluginContext): boolean {
+  async initialize(startPath: string, context: LicensePluginContext): Promise<boolean> {
     if (!this.options.cache) {
       this.db = new LicenseDatabase();
     }
 
     try {
-      this.db.initialize(startPath);
+      await this.db.initialize(startPath);
       return true;
     } catch (error) {
       context.reportError(`LicensePlugin: Failed to initialize license database: ${String(error)}`);

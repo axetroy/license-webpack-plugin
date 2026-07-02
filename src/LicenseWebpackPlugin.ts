@@ -58,7 +58,7 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       reportWarning: (msg: string) => compilation.warnings.push(new Error(msg)),
     };
 
-    const initialized = this.core.initialize(startPath, context);
+    const initialized = await this.core.initialize(startPath, context);
     if (!initialized) return;
 
     const scanner = new PackageScanner();

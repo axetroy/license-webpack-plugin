@@ -1,5 +1,4 @@
 import { builtInLicenseChecker, normalizeLicense } from './BuiltInLicenseChecker';
-import type { PackageLicenseInfo } from './BuiltInLicenseChecker';
 import { LicenseInfo } from '../model/LicenseInfo';
 import { LicenseCache } from './LicenseCache';
 
@@ -8,7 +7,7 @@ export class LicenseDatabase {
   private initialized = false;
   private initializedPath: string | null = null;
 
-  initialize(startPath: string): void {
+  async initialize(startPath: string): Promise<void> {
     if (this.initialized && this.initializedPath === startPath) {
       return;
     }
@@ -16,7 +15,7 @@ export class LicenseDatabase {
     this.cache.clear();
     this.initialized = false;
 
-    const packages = builtInLicenseChecker({
+    const packages = await builtInLicenseChecker({
       start: startPath,
       excludePrivatePackages: false,
       customFormat: {

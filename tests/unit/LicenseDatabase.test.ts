@@ -9,13 +9,11 @@ jest.mock('../../src/checker/BuiltInLicenseChecker', () => ({
 const mockedChecker = builtInLicenseChecker as jest.MockedFunction<typeof builtInLicenseChecker>;
 
 function mockCheckerResult(packages: Record<string, unknown>) {
-  mockedChecker.mockReturnValue(packages as any);
+  mockedChecker.mockResolvedValue(packages as any);
 }
 
 function mockCheckerError(message: string) {
-  mockedChecker.mockImplementation(() => {
-    throw new Error(message);
-  });
+  mockedChecker.mockRejectedValue(new Error(message));
 }
 
 describe('LicenseDatabase', () => {
@@ -24,7 +22,7 @@ describe('LicenseDatabase', () => {
   });
 
   describe('initialize', () => {
-    it('populates cache from checker results', () => {
+    it('populates cache from checker results', async () => {
       mockCheckerResult({
         'lodash@4.17.21': {
           name: 'lodash',
@@ -41,7 +39,7 @@ describe('LicenseDatabase', () => {
       });
 
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
 
       const info = db.getLicense('lodash', '4.17.21');
       expect(info.license).toBe('MIT');
@@ -49,79 +47,79 @@ describe('LicenseDatabase', () => {
       expect(info.licenseText).toBe('MIT License');
     });
 
-    it('skips re-initialization when same path is provided', () => {
+    it('skips re-initialization when same path is provided', async () => {
       mockCheckerResult({ 'pkg@1.0.0': { name: 'pkg', version: '1.0.0', licenses: 'MIT' } });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(mockedChecker).toHaveBeenCalledTimes(1);
     });
 
-    it('re-initializes when a different path is provided', () => {
+    it('re-initializes when a different path is provided', async () => {
       mockCheckerResult({ 'pkg@1.0.0': { name: 'pkg', version: '1.0.0', licenses: 'MIT' } });
       const db = new LicenseDatabase();
-      db.initialize('/workspace-a');
-      db.initialize('/workspace-b');
+      await db.initialize('/workspace-a');
+      await db.initialize('/workspace-b');
       expect(mockedChecker).toHaveBeenCalledTimes(2);
     });
 
-    it('handles array licenses by joining with AND', () => {
+    it('handles array licenses by joining with AND', async () => {
       mockCheckerResult({
         'dual@1.0.0': { name: 'dual', version: '1.0.0', licenses: ['MIT', 'Apache-2.0'] },
       });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('dual', '1.0.0').license).toBe('MIT AND Apache-2.0');
     });
 
-    it('handles single-element array license', () => {
+    it('handles single-element array license', async () => {
       mockCheckerResult({
         'single@1.0.0': { name: 'single', version: '1.0.0', licenses: ['MIT'] },
       });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('single', '1.0.0').license).toBe('MIT');
     });
 
-    it('uses UNKNOWN when licenses field is missing', () => {
+    it('uses UNKNOWN when licenses field is missing', async () => {
       mockCheckerResult({
         'nolicense@1.0.0': { name: 'nolicense', version: '1.0.0' },
       });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('nolicense', '1.0.0').license).toBe('UNKNOWN');
     });
 
-    it('discards non-string licenseText', () => {
+    it('discards non-string licenseText', async () => {
       mockCheckerResult({
         'pkg@1.0.0': { name: 'pkg', version: '1.0.0', licenses: 'MIT', licenseText: true },
       });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('pkg', '1.0.0').licenseText).toBeUndefined();
     });
 
-    it('discards empty string licenseText', () => {
+    it('discards empty string licenseText', async () => {
       mockCheckerResult({
         'pkg@1.0.0': { name: 'pkg', version: '1.0.0', licenses: 'MIT', licenseText: '' },
       });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('pkg', '1.0.0').licenseText).toBeUndefined();
     });
 
-    it('re-throws checker errors', () => {
+    it('re-throws checker errors', async () => {
       mockCheckerError('checker failed');
       const db = new LicenseDatabase();
-      expect(() => db.initialize('/workspace')).toThrow('checker failed');
+      await expect(db.initialize('/workspace')).rejects.toThrow('checker failed');
     });
   });
 
   describe('getLicense', () => {
-    it('returns cached license when available', () => {
+    it('returns cached license when available', async () => {
       mockCheckerResult({ 'pkg@1.0.0': { name: 'pkg', version: '1.0.0', licenses: 'MIT' } });
       const db = new LicenseDatabase();
-      db.initialize('/workspace');
+      await db.initialize('/workspace');
       expect(db.getLicense('pkg', '1.0.0').license).toBe('MIT');
     });
 
@@ -131,5 +129,4 @@ describe('LicenseDatabase', () => {
       expect(info.license).toBe('UNKNOWN');
     });
   });
-
 });
