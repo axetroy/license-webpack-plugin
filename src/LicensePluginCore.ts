@@ -143,7 +143,15 @@ export class LicensePluginCore {
         continue;
       }
 
-      items.push({ package: pkgInfo, license: { ...licenseInfo } });
+      items.push({
+        package: {
+          ...pkgInfo,
+          repository: this.options.includeRepository ? pkgInfo.repository : undefined,
+          homepage: this.options.includeHomepage ? pkgInfo.homepage : undefined,
+          author: this.options.includeAuthor ? pkgInfo.author : undefined,
+        },
+        license: { ...licenseInfo },
+      });
     }
 
     if (this.options.recorder) {
@@ -197,9 +205,6 @@ export class LicensePluginCore {
   private filterLicenseFields(licenseInfo: LicenseInfo): LicenseInfo {
     return {
       ...licenseInfo,
-      repository: this.options.includeRepository ? licenseInfo.repository : undefined,
-      homepage: this.options.includeHomepage ? licenseInfo.homepage : undefined,
-      author: this.options.includeAuthor ? licenseInfo.author : undefined,
       licenseText: this.options.includeLicenseText ? licenseInfo.licenseText : undefined,
     };
   }

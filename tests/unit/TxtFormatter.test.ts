@@ -10,11 +10,11 @@ const sampleItems: OutputItem[] = [
       packageJsonPath: '/node_modules/react/package.json',
       chunks: ['main'],
       modules: ['/node_modules/react/index.js'],
+      repository: 'https://github.com/facebook/react',
+      author: 'Meta Open Source <opensource@meta.com>',
     },
     license: {
       license: 'MIT',
-      repository: 'https://github.com/facebook/react',
-      author: 'Meta Open Source <opensource@meta.com>',
       licenseText: 'MIT License\nCopyright (c) Facebook',
     },
   },
@@ -53,8 +53,8 @@ describe('TxtFormatter', () => {
     const result = formatter.generate([
       {
         ...sampleItems[0],
-        license: {
-          ...sampleItems[0].license,
+        package: {
+          ...sampleItems[0].package,
           author: 'Meta Open Source Team',
         },
       },
@@ -67,8 +67,8 @@ describe('TxtFormatter', () => {
     const result = formatter.generate([
       {
         ...sampleItems[0],
-        license: {
-          ...sampleItems[0].license,
+        package: {
+          ...sampleItems[0].package,
           author: 'Example Maintainer <   maintainer@example.com   >',
         },
       },
@@ -81,8 +81,8 @@ describe('TxtFormatter', () => {
     const result = formatter.generate([
       {
         ...sampleItems[0],
-        license: {
-          ...sampleItems[0].license,
+        package: {
+          ...sampleItems[0].package,
           author: 'Example<example@example.com>',
         },
       },

@@ -37,15 +37,6 @@ export class LicenseDatabase {
         license: licenseStr,
         licenseFile: info.licenseFile,
         licenseText,
-        repository: info.repository,
-        homepage: info.url,
-        author: info.publisher
-          ? info.email
-            ? `${info.publisher} <${info.email}>`
-            : info.publisher
-          : undefined,
-        publisher: info.publisher,
-        private: info.private,
       };
 
       this.cache.set(key, licenseInfo);

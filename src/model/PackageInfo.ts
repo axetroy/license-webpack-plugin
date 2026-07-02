@@ -5,4 +5,9 @@ export interface PackageInfo {
   packageJsonPath: string;
   chunks: string[];
   modules: string[];
+  repository?: string;
+  homepage?: string;
+  author?: string;
+  publisher?: string;
+  private?: boolean;
 }

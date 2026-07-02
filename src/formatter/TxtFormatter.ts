@@ -21,11 +21,11 @@ export class TxtFormatter implements Formatter {
       lines.push(this.formatField('Version', item.package.version, labelWidth));
       lines.push(this.formatField('License', item.license.license, labelWidth));
 
-      if (item.license.repository) {
-        lines.push(this.formatField('Repository', item.license.repository, labelWidth));
+      if (item.package.repository) {
+        lines.push(this.formatField('Repository', item.package.repository, labelWidth));
       }
-      if (item.license.author) {
-        lines.push(this.formatField('Author', this.formatAuthor(item.license.author), labelWidth));
+      if (item.package.author) {
+        lines.push(this.formatField('Author', this.formatAuthor(item.package.author), labelWidth));
       }
 
       if (this.options.includeLicenseText !== false && item.license.licenseText) {

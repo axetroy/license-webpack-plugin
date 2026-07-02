@@ -46,10 +46,6 @@ describe('LicenseDatabase', () => {
       expect(info.license).toBe('MIT');
       expect(info.licenseFile).toBe('/path/LICENSE');
       expect(info.licenseText).toBe('MIT License');
-      expect(info.repository).toBe('https://github.com/lodash/lodash');
-      expect(info.homepage).toBe('https://lodash.com');
-      expect(info.author).toBe('John <john@example.com>');
-      expect(info.publisher).toBe('John');
     });
 
     it('skips re-initialization when same path is provided', async () => {
@@ -111,24 +107,6 @@ describe('LicenseDatabase', () => {
       const db = new LicenseDatabase();
       await db.initialize('/workspace');
       expect(db.getLicense('pkg', '1.0.0').licenseText).toBeUndefined();
-    });
-
-    it('handles missing publisher by omitting author', async () => {
-      mockCheckerResult({
-        'anon@1.0.0': { name: 'anon', version: '1.0.0', licenses: 'MIT' },
-      });
-      const db = new LicenseDatabase();
-      await db.initialize('/workspace');
-      expect(db.getLicense('anon', '1.0.0').author).toBeUndefined();
-    });
-
-    it('formats author with only publisher, no email', async () => {
-      mockCheckerResult({
-        'author@1.0.0': { name: 'author', version: '1.0.0', licenses: 'MIT', publisher: 'Author Name' },
-      });
-      const db = new LicenseDatabase();
-      await db.initialize('/workspace');
-      expect(db.getLicense('author', '1.0.0').author).toBe('Author Name');
     });
 
     it('re-throws checker errors', async () => {

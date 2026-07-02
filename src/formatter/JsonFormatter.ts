@@ -7,9 +7,9 @@ export class JsonFormatter implements Formatter {
       name: item.package.name,
       version: item.package.version,
       license: item.license.license,
-      repository: item.license.repository,
-      homepage: item.license.homepage,
-      author: item.license.author,
+      repository: item.package.repository,
+      homepage: item.package.homepage,
+      author: item.package.author,
     }));
 
     return JSON.stringify(result, null, 2);

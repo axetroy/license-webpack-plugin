@@ -10,8 +10,9 @@ const sampleItems: OutputItem[] = [
       packageJsonPath: '/node_modules/lodash/package.json',
       chunks: ['main'],
       modules: [],
+      repository: 'https://github.com/lodash/lodash',
     },
-    license: { license: 'MIT', repository: 'https://github.com/lodash/lodash' },
+    license: { license: 'MIT' },
   },
 ];
 
