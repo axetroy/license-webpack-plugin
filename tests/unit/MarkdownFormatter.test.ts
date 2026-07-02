@@ -23,4 +23,61 @@ describe('MarkdownFormatter', () => {
     expect(result).toContain('| Package | Version | License |');
     expect(result).toContain('| axios | 1.0.0 | MIT |');
   });
+
+  it('returns header only for empty items', () => {
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate([]);
+    expect(result).toContain('# Third Party Licenses');
+    expect(result).toContain('| Package | Version | License |');
+    expect(result).toContain('|---------|---------|---------|');
+    const rowCount = result.split('\n').filter(l => l.startsWith('| ')).length;
+    expect(rowCount).toBe(1);
+  });
+
+  it('generates rows for multiple items', () => {
+    const items: OutputItem[] = [
+      {
+        package: { name: 'react', version: '18.0.0', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT' },
+      },
+      {
+        package: { name: 'lodash', version: '4.17.21', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT' },
+      },
+    ];
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(items);
+    expect(result).toContain('| react | 18.0.0 | MIT |');
+    expect(result).toContain('| lodash | 4.17.21 | MIT |');
+  });
+
+  it('handles empty/missing version', () => {
+    const items: OutputItem[] = [
+      {
+        package: { name: 'unknown', version: '', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT' },
+      },
+    ];
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(items);
+    expect(result).toContain('| unknown |  | MIT |');
+  });
+
+  it('output ends with newline', () => {
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(sampleItems);
+    expect(result.endsWith('\n')).toBe(true);
+  });
+
+  it('handles package name with pipe character by including it as-is', () => {
+    const items: OutputItem[] = [
+      {
+        package: { name: 'a|b', version: '1.0', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT' },
+      },
+    ];
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(items);
+    expect(result).toContain('| a|b | 1.0 | MIT |');
+  });
 });
