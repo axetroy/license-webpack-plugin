@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import webpack = require('webpack');
-import { LicenseWebpackPlugin } from '../../dist/LicenseWebpackPlugin';
+import webpack from 'webpack';
+import { LicenseWebpackPlugin } from '../../../dist/LicenseWebpackPlugin';
 
 jest.setTimeout(60000);
 
@@ -44,7 +44,7 @@ describe('LicenseWebpackPlugin integration', () => {
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -53,7 +53,7 @@ describe('LicenseWebpackPlugin integration', () => {
         new LicenseWebpackPlugin({
           filename: 'licenses.txt',
           format: 'txt',
-          workspaceRoot: path.resolve(__dirname, '../..'),
+          workspaceRoot: path.resolve(__dirname, '../../..'),
         }),
       ],
     });
@@ -72,7 +72,7 @@ describe('LicenseWebpackPlugin integration', () => {
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -81,7 +81,7 @@ describe('LicenseWebpackPlugin integration', () => {
         new LicenseWebpackPlugin({
           filename: 'licenses.json',
           format: 'json',
-          workspaceRoot: path.resolve(__dirname, '../..'),
+          workspaceRoot: path.resolve(__dirname, '../../..'),
         }),
       ],
     });
@@ -100,12 +100,12 @@ describe('LicenseWebpackPlugin integration', () => {
   // package already present in the repository's devDependencies.  lodash has a
   // well-known MIT license whose text begins with "Copyright OpenJS Foundation".
   it('includes dependency license text when includeLicenseText is true', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('include-license-text-true');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -132,12 +132,12 @@ describe('LicenseWebpackPlugin integration', () => {
   });
 
   it('only includes packages that are actually bundled (not all devDependencies)', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('production-only');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -168,12 +168,12 @@ describe('LicenseWebpackPlugin integration', () => {
   });
 
   it('omits dependency license text when includeLicenseText is false', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('include-license-text-false');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',

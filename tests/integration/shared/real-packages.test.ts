@@ -3,9 +3,9 @@
  * the BuiltInLicenseChecker produces correct results against actual data.
  */
 import * as path from 'path';
-import { builtInLicenseChecker } from '../../src/checker/BuiltInLicenseChecker';
+import { builtInLicenseChecker } from '../../../src/checker/BuiltInLicenseChecker';
 
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
 describe('real packages – builtInLicenseChecker', () => {
   it('detects lodash license', (done) => {

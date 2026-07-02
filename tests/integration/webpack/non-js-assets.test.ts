@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import webpack = require('webpack');
-import { LicenseWebpackPlugin } from '../../dist/LicenseWebpackPlugin';
+import webpack from 'webpack';
+import { LicenseWebpackPlugin } from '../../../dist/LicenseWebpackPlugin';
 
 jest.setTimeout(60000);
 
@@ -38,12 +38,12 @@ describe('Non-JS assets - CSS, HTML, TXT support', () => {
   });
 
   it('detects packages from CSS imports', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('css-assets');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry-css.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry-css.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -74,16 +74,16 @@ describe('Non-JS assets - CSS, HTML, TXT support', () => {
   });
 
   it('detects packages from HTML template imports', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('html-assets');
 
     // Create a test HTML file that references lodash
-    const testHtmlPath = path.resolve(__dirname, 'fixtures/test.html');
+    const testHtmlPath = path.resolve(__dirname, '../fixtures/test.html');
     fs.writeFileSync(testHtmlPath, '<html><body>Test</body></html>');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -106,16 +106,16 @@ describe('Non-JS assets - CSS, HTML, TXT support', () => {
   });
 
   it('handles mixed asset types in single build', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('mixed-assets');
 
     // Create additional fixtures
-    const txtFixturePath = path.resolve(__dirname, 'fixtures/readme.txt');
+    const txtFixturePath = path.resolve(__dirname, '../fixtures/readme.txt');
     fs.writeFileSync(txtFixturePath, 'Readme content');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry-css.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry-css.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -149,12 +149,12 @@ describe('Non-JS assets - CSS, HTML, TXT support', () => {
   });
 
   it('outputs JSON format with non-JS assets', async () => {
-    const workspaceRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = path.resolve(__dirname, '../../..');
     const outputPath = prepareOutputDir('json-assets');
 
     const stats = await runWebpack({
       mode: 'development',
-      entry: path.resolve(__dirname, 'fixtures/entry-css.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry-css.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',

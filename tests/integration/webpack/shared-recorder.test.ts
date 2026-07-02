@@ -12,9 +12,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import webpack = require('webpack');
-import { LicenseWebpackPlugin } from '../../dist/LicenseWebpackPlugin';
-import { DefaultRecorder } from '../../dist/Recorder';
+import webpack from 'webpack';
+import { LicenseWebpackPlugin } from '../../../dist/LicenseWebpackPlugin';
+import { DefaultRecorder } from '../../../dist/Recorder';
 
 jest.setTimeout(60000);
 
@@ -42,9 +42,9 @@ function prepareOutputDir(name: string): string {
   return outputPath;
 }
 
-const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
-const ENTRY = path.resolve(__dirname, 'fixtures/entry.js');
-const ENTRY2 = path.resolve(__dirname, 'fixtures/entry2.js');
+const WORKSPACE_ROOT = path.resolve(__dirname, '../../..');
+const ENTRY = path.resolve(__dirname, '../fixtures/entry.js');
+const ENTRY2 = path.resolve(__dirname, '../fixtures/entry2.js');
 
 afterAll(() => {
   fs.rmSync(path.resolve(__dirname, 'output', 'shared-recorder'), {

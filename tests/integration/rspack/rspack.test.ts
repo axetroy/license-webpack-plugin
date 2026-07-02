@@ -14,7 +14,7 @@ import * as path from 'path';
 // Import Rspack types without importing webpack so that the test itself
 // demonstrates the bundler-agnostic pattern.
 import type { Configuration, Stats } from '@rspack/core';
-import { LicenseWebpackPlugin } from '../../dist/LicenseWebpackPlugin';
+import { LicenseWebpackPlugin } from '../../../dist/LicenseWebpackPlugin';
 
 /** Maximum time (ms) to allow a single Rspack build to complete in CI. */
 const RSPACK_BUILD_TIMEOUT = 60_000;
@@ -58,7 +58,7 @@ describe('LicenseWebpackPlugin – Rspack integration', () => {
 
     const stats = await runRspack({
       mode: 'production',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -67,7 +67,7 @@ describe('LicenseWebpackPlugin – Rspack integration', () => {
         new LicenseWebpackPlugin({
           filename: 'third-party-licenses.txt',
           format: 'txt',
-          workspaceRoot: path.resolve(__dirname, '../..'),
+          workspaceRoot: path.resolve(__dirname, '../../..'),
         }),
       ],
     });
@@ -90,7 +90,7 @@ describe('LicenseWebpackPlugin – Rspack integration', () => {
 
     const stats = await runRspack({
       mode: 'production',
-      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      entry: path.resolve(__dirname, '../fixtures/entry.js'),
       output: {
         path: outputPath,
         filename: 'bundle.js',
@@ -99,7 +99,7 @@ describe('LicenseWebpackPlugin – Rspack integration', () => {
         new LicenseWebpackPlugin({
           filename: 'licenses.json',
           format: 'json',
-          workspaceRoot: path.resolve(__dirname, '../..'),
+          workspaceRoot: path.resolve(__dirname, '../../..'),
         }),
       ],
     });
