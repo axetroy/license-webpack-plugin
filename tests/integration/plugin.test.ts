@@ -36,6 +36,7 @@ describe('LicenseWebpackPlugin integration', () => {
     fs.rmSync(path.resolve(__dirname, 'output', 'json'), { recursive: true, force: true });
     fs.rmSync(path.resolve(__dirname, 'output', 'include-license-text-true'), { recursive: true, force: true });
     fs.rmSync(path.resolve(__dirname, 'output', 'include-license-text-false'), { recursive: true, force: true });
+    fs.rmSync(path.resolve(__dirname, 'output', 'production-only'), { recursive: true, force: true });
   });
 
   it('generates a licenses.txt file with txt format', async () => {
@@ -128,6 +129,42 @@ describe('LicenseWebpackPlugin integration', () => {
     expect(content).toContain('License Text:');
     // Stable prefix from lodash's LICENSE file
     expect(content).toContain('Copyright OpenJS Foundation');
+  });
+
+  it('only includes packages that are actually bundled (not all devDependencies)', async () => {
+    const workspaceRoot = path.resolve(__dirname, '../..');
+    const outputPath = prepareOutputDir('production-only');
+
+    const stats = await runWebpack({
+      mode: 'development',
+      entry: path.resolve(__dirname, 'fixtures/entry.js'),
+      output: {
+        path: outputPath,
+        filename: 'bundle.js',
+      },
+      plugins: [
+        new LicenseWebpackPlugin({
+          filename: 'licenses.json',
+          format: 'json',
+          workspaceRoot,
+        }),
+      ],
+    });
+
+    expect(stats.hasErrors()).toBe(false);
+    const licenseFile = path.join(outputPath, 'licenses.json');
+    expect(fs.existsSync(licenseFile)).toBe(true);
+
+    const parsed = JSON.parse(fs.readFileSync(licenseFile, 'utf-8')) as Array<{ name: string }>;
+    const packageNames = parsed.map((item) => item.name);
+
+    // entry.js imports lodash → lodash must be in the output
+    expect(packageNames).toContain('lodash');
+
+    // packages that exist in node_modules but are NOT imported by the entry
+    // should NOT appear in the license output.
+    // typescript is a devDependency but is never imported by entry.js → not bundled.
+    expect(packageNames).not.toContain('typescript');
   });
 
   it('omits dependency license text when includeLicenseText is false', async () => {
