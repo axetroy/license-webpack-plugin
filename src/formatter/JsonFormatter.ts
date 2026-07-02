@@ -7,6 +7,8 @@ export class JsonFormatter implements Formatter {
       name: item.package.name,
       version: item.package.version,
       license: item.license.license,
+      licenseText: item.license.licenseText,
+      copyright: item.license.copyright,
       repository: item.license.repository,
       homepage: item.license.homepage,
       author: item.license.author,

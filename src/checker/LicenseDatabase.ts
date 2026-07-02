@@ -39,10 +39,14 @@ export class LicenseDatabase {
       const licenseText =
         typeof info.licenseText === 'string' && info.licenseText.length > 0 ? info.licenseText : undefined;
 
+      // copyright is extracted from license files by license-checker
+      const copyright = typeof info.copyright === 'string' && info.copyright.length > 0 ? info.copyright : undefined;
+
       const licenseInfo: LicenseInfo = {
         license: licenseStr,
         licenseFile: info.licenseFile,
         licenseText,
+        copyright,
         repository: info.repository,
         homepage: info.url,
         author: info.publisher

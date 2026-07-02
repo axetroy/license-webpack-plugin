@@ -20,6 +20,7 @@ export interface LicenseWebpackPluginOptions {
   filename?: string;
   format?: OutputFormat;
   includeLicenseText?: boolean;
+  includeCopyright?: boolean;
   includeRepository?: boolean;
   includeHomepage?: boolean;
   includeAuthor?: boolean;
@@ -104,6 +105,7 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       filename: options.filename || 'licenses.txt',
       format: options.format || 'txt',
       includeLicenseText: options.includeLicenseText !== false,
+      includeCopyright: options.includeCopyright !== false,
       includeRepository: options.includeRepository !== false,
       includeHomepage: options.includeHomepage !== false,
       includeAuthor: options.includeAuthor !== false,
@@ -309,6 +311,7 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       homepage: this.options.includeHomepage ? licenseInfo.homepage : undefined,
       author: this.options.includeAuthor ? licenseInfo.author : undefined,
       licenseText: this.options.includeLicenseText ? licenseInfo.licenseText : undefined,
+      copyright: this.options.includeCopyright ? licenseInfo.copyright : undefined,
     };
   }
 
@@ -322,7 +325,10 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
         return new HtmlFormatter();
       case 'txt':
       default:
-        return new TxtFormatter({ includeLicenseText: this.options.includeLicenseText });
+        return new TxtFormatter({
+          includeLicenseText: this.options.includeLicenseText,
+          includeCopyright: this.options.includeCopyright,
+        });
     }
   }
 }

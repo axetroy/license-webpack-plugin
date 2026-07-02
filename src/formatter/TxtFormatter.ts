@@ -3,6 +3,7 @@ import { Formatter } from './Formatter';
 
 export interface TxtFormatterOptions {
   includeLicenseText?: boolean;
+  includeCopyright?: boolean;
 }
 
 // Lightweight validation to detect common email strings without enforcing full RFC rules.
@@ -26,6 +27,9 @@ export class TxtFormatter implements Formatter {
       }
       if (item.license.author) {
         lines.push(this.formatField('Author', this.formatAuthor(item.license.author), labelWidth));
+      }
+      if (item.license.copyright) {
+        lines.push(this.formatField('Copyright', item.license.copyright, labelWidth));
       }
 
       if (this.options.includeLicenseText !== false && item.license.licenseText) {

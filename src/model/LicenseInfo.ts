@@ -4,6 +4,7 @@ export interface LicenseInfo {
   license: string;
   licenseFile?: string;
   licenseText?: string;
+  copyright?: string;
   repository?: string;
   homepage?: string;
   author?: string;

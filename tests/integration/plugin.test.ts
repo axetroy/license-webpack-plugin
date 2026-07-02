@@ -143,6 +143,7 @@ describe('LicenseWebpackPlugin integration', () => {
           filename: 'licenses.txt',
           format: 'txt',
           includeLicenseText: false,
+          includeCopyright: false,
           workspaceRoot,
         }),
       ],
