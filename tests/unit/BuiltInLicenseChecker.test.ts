@@ -66,6 +66,51 @@ describe('BuiltInLicenseChecker', () => {
       });
     });
 
+    it('passes through "SEE LICENSE IN LICENSE" verbatim', (done) => {
+      createPackage('test-see-license', '1.0.0', { license: 'SEE LICENSE IN LICENSE' });
+      builtInLicenseChecker({ start: tempDir }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['test-see-license@1.0.0'].licenses).toBe('SEE LICENSE IN LICENSE');
+        done();
+      });
+    });
+
+    it('passes through "UNLICENSED" verbatim', (done) => {
+      createPackage('test-unlicensed', '1.0.0', { license: 'UNLICENSED' });
+      builtInLicenseChecker({ start: tempDir }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['test-unlicensed@1.0.0'].licenses).toBe('UNLICENSED');
+        done();
+      });
+    });
+
+    it('passes through "Proprietary" verbatim', (done) => {
+      createPackage('test-proprietary', '1.0.0', { license: 'Proprietary' });
+      builtInLicenseChecker({ start: tempDir }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['test-proprietary@1.0.0'].licenses).toBe('Proprietary');
+        done();
+      });
+    });
+
+    it('passes through custom license string verbatim', (done) => {
+      createPackage('test-custom', '1.0.0', { license: 'Custom' });
+      builtInLicenseChecker({ start: tempDir }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['test-custom@1.0.0'].licenses).toBe('Custom');
+        done();
+      });
+    });
+
+    it('treats empty license string as undefined (falsy check in getLicenseString)', (done) => {
+      createPackage('test-empty-license', '1.0.0', { license: '' });
+      builtInLicenseChecker({ start: tempDir }, (err, packages) => {
+        expect(err).toBeNull();
+        expect(packages['test-empty-license@1.0.0'].licenses).toBeUndefined();
+        done();
+      });
+    });
+
     it('handles multiple licenses (array)', (done) => {
       createPackage('test-multi', '1.0.0', { licenses: ['MIT', 'Apache-2.0'] });
       builtInLicenseChecker({ start: tempDir }, (err, packages) => {

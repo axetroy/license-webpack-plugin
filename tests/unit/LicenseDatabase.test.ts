@@ -1,7 +1,12 @@
 import { LicenseDatabase } from '../../src/checker/LicenseDatabase';
 import { builtInLicenseChecker } from '../../src/checker/BuiltInLicenseChecker';
 
-jest.mock('../../src/checker/BuiltInLicenseChecker');
+const { normalizeLicense: _normalizeLicense } = jest.requireActual('../../src/checker/BuiltInLicenseChecker');
+
+jest.mock('../../src/checker/BuiltInLicenseChecker', () => ({
+  ...jest.requireActual('../../src/checker/BuiltInLicenseChecker'),
+  builtInLicenseChecker: jest.fn(),
+}));
 
 const mockedChecker = builtInLicenseChecker as jest.MockedFunction<typeof builtInLicenseChecker>;
 

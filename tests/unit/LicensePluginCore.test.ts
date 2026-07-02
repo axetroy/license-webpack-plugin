@@ -327,4 +327,134 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toMatchSnapshot();
     });
   });
+
+  describe('custom / non-standard licenses', () => {
+    it('normalizes "SEE LICENSE IN LICENSE" to "Custom"', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({ workspaceRoot: '/test' });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+      expect(items[0].license.license).toBe('Custom');
+      expect(items).toMatchSnapshot();
+    });
+
+    it('normalizes "UNLICENSED" to "Custom"', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({ workspaceRoot: '/test' });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+      expect(items[0].license.license).toBe('Custom');
+      expect(items).toMatchSnapshot();
+    });
+
+    it('normalizes "Proprietary" to "Custom"', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({ workspaceRoot: '/test' });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+      expect(items[0].license.license).toBe('Custom');
+      expect(items).toMatchSnapshot();
+    });
+
+    it('passes through empty license string unchanged (becomes UNKNOWN in DB)', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: '',
+      });
+      const core = new LicensePluginCore({ workspaceRoot: '/test' });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+      expect(items[0].license.license).toBe('');
+      expect(items).toMatchSnapshot();
+    });
+
+    it('onlyAllow blocks "Custom" when not in allow list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT', 'Apache-2.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('Custom');
+      expect(errors).toMatchSnapshot();
+    });
+
+    it('failOn blocks "Custom" when in fail list', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({
+        failOn: ['Custom'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]).toContain('Custom');
+      expect(errors).toMatchSnapshot();
+    });
+
+    it('allows "Custom" when onlyAllow includes exact match', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'Custom',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['Custom'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('pkg@1.0.0', makePackage('pkg', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(errors).toEqual([]);
+      expect(items).toHaveLength(1);
+      expect(items[0].license.license).toBe('Custom');
+      expect(items).toMatchSnapshot();
+    });
+  });
 });

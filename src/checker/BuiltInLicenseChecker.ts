@@ -39,11 +39,11 @@ const LICENSE_BASENAMES = [
   /^COPYRIGHT$/i,
 ];
 
-// SPDX license identifiers that are valid
+// SPDX license identifiers that are valid (stored uppercase for case-insensitive comparison)
 const VALID_SPDX_LICENSES = new Set([
-  'MIT', 'Apache-2.0', 'Apache2', 'Apache 2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'BSD-3-Clause-Clear',
-  'ISC', 'GPL-2.0', 'GPL-3.0', 'LGPL-2.1', 'LGPL-3.0', 'MPL-2.0', '0BSD', 'Unlicense', 'CC0-1.0',
-  'CC-BY-3.0', 'CC-BY-4.0', 'WTFPL', 'Zlib', 'PostgreSQL', 'Python-2.0', 'Ruby', 'Artistic-2.0',
+  'MIT', 'APACHE-2.0', 'APACHE2', 'APACHE 2.0', 'BSD-2-CLAUSE', 'BSD-3-CLAUSE', 'BSD-3-CLAUSE-CLEAR',
+  'ISC', 'GPL-2.0', 'GPL-3.0', 'LGPL-2.1', 'LGPL-3.0', 'MPL-2.0', '0BSD', 'UNLICENSE', 'CC0-1.0',
+  'CC-BY-3.0', 'CC-BY-4.0', 'WTFPL', 'ZLIB', 'POSTGRESQL', 'PYTHON-2.0', 'RUBY', 'ARTISTIC-2.0',
   'BSL-1.0', 'EPL-1.0', 'EPL-2.0', 'EUPL-1.1', 'EUPL-1.2', 'AGPL-3.0', 'OSL-3.0',
 ]);
 
@@ -105,7 +105,7 @@ function parseSpdxExpression(license: string): string | null {
   if (prefixMatch) {
     const licenseId = prefixMatch[1].toUpperCase().replace(/\s+/g, '-');
     if (VALID_SPDX_LICENSES.has(licenseId)) {
-      return licenseId;
+      return prefixMatch[1];
     }
   }
 
@@ -186,6 +186,16 @@ function getLicenseString(license: string | object | undefined): string | undefi
     return String((license as { type: string }).type);
   }
   return undefined;
+}
+
+/**
+ * Check if a license string is a valid SPDX expression (known identifiers
+ * joined by AND/OR). Returns the canonical form if valid, or "Custom" for
+ * non-standard license declarations.
+ */
+export function normalizeLicense(license: string): string {
+  const parsed = parseSpdxExpression(license);
+  return parsed || 'Custom';
 }
 
 /**

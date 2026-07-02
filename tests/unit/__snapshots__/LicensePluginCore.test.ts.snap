@@ -1,5 +1,137 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses allows "Custom" when onlyAllow includes exact match 1`] = `
+[
+  {
+    "license": {
+      "license": "Custom",
+      "licenseText": undefined,
+    },
+    "package": {
+      "author": undefined,
+      "chunks": [
+        "main",
+      ],
+      "homepage": undefined,
+      "modules": [],
+      "name": "pkg",
+      "packageJsonPath": "/node_modules/pkg/package.json",
+      "path": "/node_modules/pkg",
+      "repository": undefined,
+      "version": "1.0.0",
+    },
+  },
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses failOn blocks "Custom" when in fail list 1`] = `
+[
+  "LicensePlugin: License "Custom" for package "pkg@1.0.0" is in the fail list",
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses normalizes "Proprietary" to "Custom" 1`] = `
+[
+  {
+    "license": {
+      "license": "Custom",
+      "licenseText": undefined,
+    },
+    "package": {
+      "author": undefined,
+      "chunks": [
+        "main",
+      ],
+      "homepage": undefined,
+      "modules": [],
+      "name": "pkg",
+      "packageJsonPath": "/node_modules/pkg/package.json",
+      "path": "/node_modules/pkg",
+      "repository": undefined,
+      "version": "1.0.0",
+    },
+  },
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses normalizes "SEE LICENSE IN LICENSE" to "Custom" 1`] = `
+[
+  {
+    "license": {
+      "license": "Custom",
+      "licenseText": undefined,
+    },
+    "package": {
+      "author": undefined,
+      "chunks": [
+        "main",
+      ],
+      "homepage": undefined,
+      "modules": [],
+      "name": "pkg",
+      "packageJsonPath": "/node_modules/pkg/package.json",
+      "path": "/node_modules/pkg",
+      "repository": undefined,
+      "version": "1.0.0",
+    },
+  },
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses normalizes "UNLICENSED" to "Custom" 1`] = `
+[
+  {
+    "license": {
+      "license": "Custom",
+      "licenseText": undefined,
+    },
+    "package": {
+      "author": undefined,
+      "chunks": [
+        "main",
+      ],
+      "homepage": undefined,
+      "modules": [],
+      "name": "pkg",
+      "packageJsonPath": "/node_modules/pkg/package.json",
+      "path": "/node_modules/pkg",
+      "repository": undefined,
+      "version": "1.0.0",
+    },
+  },
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses onlyAllow blocks "Custom" when not in allow list 1`] = `
+[
+  "LicensePlugin: License "Custom" for package "pkg@1.0.0" is not in the allowed list: MIT, Apache-2.0",
+]
+`;
+
+exports[`LicensePluginCore — compound license strings custom / non-standard licenses passes through empty license string unchanged (becomes UNKNOWN in DB) 1`] = `
+[
+  {
+    "license": {
+      "license": "",
+      "licenseText": undefined,
+    },
+    "package": {
+      "author": undefined,
+      "chunks": [
+        "main",
+      ],
+      "homepage": undefined,
+      "modules": [],
+      "name": "pkg",
+      "packageJsonPath": "/node_modules/pkg/package.json",
+      "path": "/node_modules/pkg",
+      "repository": undefined,
+      "version": "1.0.0",
+    },
+  },
+]
+`;
+
 exports[`LicensePluginCore — compound license strings failOn with compound licenses fails AND expression when exact compound string matches fail list 1`] = `
 [
   "LicensePlugin: License "MIT AND Apache-2.0" for package "pkg@1.0.0" is in the fail list",

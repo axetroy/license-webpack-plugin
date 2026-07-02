@@ -1,4 +1,4 @@
-import { builtInLicenseChecker, type PackageLicenseInfo } from './BuiltInLicenseChecker';
+import { builtInLicenseChecker, normalizeLicense, type PackageLicenseInfo } from './BuiltInLicenseChecker';
 import { LicenseInfo } from '../model/LicenseInfo';
 import { LicenseCache } from './LicenseCache';
 
@@ -23,9 +23,13 @@ export class LicenseDatabase {
       let licenseStr = 'UNKNOWN';
       if (info.licenses) {
         if (Array.isArray(info.licenses)) {
-          licenseStr = info.licenses.join(' AND ');
+          const joined = info.licenses.join(' AND ');
+          licenseStr = normalizeLicense(joined);
         } else {
           licenseStr = info.licenses;
+          if (licenseStr !== 'UNKNOWN') {
+            licenseStr = normalizeLicense(licenseStr);
+          }
         }
       }
 
