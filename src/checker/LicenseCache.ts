@@ -30,6 +30,11 @@ export class LicenseCache {
     return this.cache;
   }
 
+  clear(): void {
+    this.cache.clear();
+    this.textHashToPackages.clear();
+  }
+
   getDuplicateGroups(): Map<string, string[]> {
     const result = new Map<string, string[]>();
 

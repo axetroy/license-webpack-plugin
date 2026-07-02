@@ -35,6 +35,10 @@ export class LicenseDatabase {
       return;
     }
 
+    // Clear cached data when switching to a different workspace path.
+    this.cache.clear();
+    this.initialized = false;
+
     const packages = await this.loadPackages(startPath);
 
     for (const [key, info] of Object.entries(packages ?? {})) {

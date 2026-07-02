@@ -169,6 +169,7 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
     const packages = scanner.scan(compilation);
     let items: OutputItem[] = [];
     const seenLicenseTexts = new Set<string>();
+    const licenseErrors: string[] = [];
 
     for (const pkgInfo of packages.values()) {
       if (this.options.includeChunks.length > 0) {
@@ -195,15 +196,17 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
       }
 
       if (this.options.onlyAllow.length > 0 && !this.options.onlyAllow.includes(licenseInfo.license)) {
-        throw new Error(
+        licenseErrors.push(
           `LicenseWebpackPlugin: License "${licenseInfo.license}" for package "${pkgInfo.name}@${pkgInfo.version}" is not in the allowed list: ${this.options.onlyAllow.join(', ')}`
         );
+        continue;
       }
 
       if (this.options.failOn.length > 0 && this.options.failOn.includes(licenseInfo.license)) {
-        throw new Error(
+        licenseErrors.push(
           `LicenseWebpackPlugin: License "${licenseInfo.license}" for package "${pkgInfo.name}@${pkgInfo.version}" is in the fail list`
         );
+        continue;
       }
 
       const normalizedLicense = { ...licenseInfo };
@@ -222,6 +225,14 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
     if (this.options.recorder) {
       const report: LicenseBuildReport = { items };
       this.options.recorder.record(report);
+    }
+
+    // Report all license violations and skip asset emission.
+    if (licenseErrors.length > 0) {
+      for (const errMsg of licenseErrors) {
+        compilation.errors.push(new Error(errMsg));
+      }
+      return;
     }
 
     // In record-only mode, skip emitting the asset.
