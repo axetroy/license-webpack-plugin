@@ -1,12 +1,6 @@
-import { execFile } from 'child_process';
-import type { ModuleInfos, InitOpts } from 'license-checker-rseidelsohn';
+import { builtInLicenseChecker, type PackageLicenseInfo } from './BuiltInLicenseChecker';
 import { LicenseInfo } from '../model/LicenseInfo';
 import { LicenseCache } from './LicenseCache';
-
-// Dynamic import types for license-checker-rseidelsohn (ESM module)
-type LicenseCheckerModule = {
-  init(opts: InitOpts, callback: (err: Error | null, packages: ModuleInfos) => void): void;
-};
 
 export class LicenseDatabase {
   private readonly cache = new LicenseCache();
@@ -69,77 +63,23 @@ export class LicenseDatabase {
     return this.cache;
   }
 
-  private async loadPackages(startPath: string): Promise<ModuleInfos> {
-    try {
-      return await this.runLicenseCheckerDirect(startPath);
-    } catch {
-      return this.runLicenseCheckerInSubprocess(startPath);
-    }
-  }
-
-  private runLicenseCheckerDirect(startPath: string): Promise<ModuleInfos> {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const licenseChecker = require('license-checker-rseidelsohn') as LicenseCheckerModule;
-
-    const options: InitOpts = {
-      start: startPath,
-      excludePrivatePackages: false,
-      production: false,
-      customFormat: {
-        licenseText: true,
-      },
-    };
-
+  private loadPackages(startPath: string): Promise<Record<string, PackageLicenseInfo>> {
     return new Promise((resolve, reject) => {
-      licenseChecker.init(options, (err, packages) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(packages ?? {});
-      });
-    });
-  }
-
-  private runLicenseCheckerInSubprocess(startPath: string): Promise<ModuleInfos> {
-    const script = [
-      "import { init } from 'license-checker-rseidelsohn';",
-      'const options = JSON.parse(process.argv[1]);',
-      'init(options, (err, packages) => {',
-      '  if (err) {',
-      '    console.error(err instanceof Error ? err.message : String(err));',
-      '    process.exit(1);',
-      '    return;',
-      '  }',
-      '  process.stdout.write(JSON.stringify(packages || {}));',
-      '});',
-    ].join('\n');
-
-    const options = JSON.stringify({
-      start: startPath,
-      excludePrivatePackages: false,
-      production: false,
-      customFormat: {
-        licenseText: true,
-      },
-    });
-
-    return new Promise((resolve, reject) => {
-      execFile(
-        process.execPath,
-        ['--input-type=module', '-e', script, options],
-        { maxBuffer: 20 * 1024 * 1024 },
-        (error, stdout, stderr) => {
-          if (error) {
-            reject(new Error(stderr || error.message));
+      builtInLicenseChecker(
+        {
+          start: startPath,
+          excludePrivatePackages: false,
+          production: false,
+          customFormat: {
+            licenseText: true,
+          },
+        },
+        (err, packages) => {
+          if (err) {
+            reject(err);
             return;
           }
-
-          try {
-            resolve(JSON.parse(stdout) as ModuleInfos);
-          } catch (parseError) {
-            reject(parseError);
-          }
+          resolve(packages);
         }
       );
     });
