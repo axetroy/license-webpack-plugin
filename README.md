@@ -1,4 +1,4 @@
-# license-webpack-plugin
+# license-checker-plugin
 
 A bundler-agnostic plugin that generates third-party license notices for packages actually bundled into your final build. Supports **webpack 5**, **Rspack**, and **Vite**.
 
@@ -15,7 +15,7 @@ A bundler-agnostic plugin that generates third-party license notices for package
 ## Installation
 
 ```bash
-npm install license-webpack-plugin
+npm install license-checker-plugin
 ```
 
 For webpack/Rspack projects, ensure `webpack` is installed (peer dependency).
@@ -26,7 +26,7 @@ For Vite projects, ensure `vite` is installed (peer dependency).
 ### webpack / Rspack
 
 ```js
-const { LicenseWebpackPlugin } = require('license-webpack-plugin');
+const { LicenseWebpackPlugin } = require('license-checker-plugin');
 
 module.exports = {
   mode: 'production',
@@ -46,7 +46,7 @@ module.exports = {
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite';
-import { viteLicensePlugin } from 'license-webpack-plugin';
+import { viteLicensePlugin } from 'license-checker-plugin';
 
 export default defineConfig({
   plugins: [
@@ -174,7 +174,7 @@ new LicenseWebpackPlugin({
 When using webpack's [multi-compiler](https://webpack.js.org/configuration/configuration-types/#exporting-multiple-configurations) mode (an array of configurations) each compiler runs independently. The `recorder` option lets all instances share a single `DefaultRecorder` so that one primary instance can merge all their findings and emit a single combined license file.
 
 ```js
-const { LicenseWebpackPlugin, DefaultRecorder } = require('license-webpack-plugin');
+const { LicenseWebpackPlugin, DefaultRecorder } = require('license-checker-plugin');
 
 const sharedRecorder = new DefaultRecorder();
 
@@ -226,7 +226,7 @@ webpack/Rspack plugin (class, use with `new`).
 Vite plugin (function, returns a plugin object).
 
 ```ts
-import { viteLicensePlugin } from 'license-webpack-plugin';
+import { viteLicensePlugin } from 'license-checker-plugin';
 ```
 
 ### `LicensePluginCore`
@@ -234,7 +234,7 @@ import { viteLicensePlugin } from 'license-webpack-plugin';
 Framework-agnostic core that can be used to build adapters for other bundlers.
 
 ```ts
-import { LicensePluginCore } from 'license-webpack-plugin';
+import { LicensePluginCore } from 'license-checker-plugin';
 ```
 
 ### `DefaultRecorder`

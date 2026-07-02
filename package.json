@@ -1,5 +1,5 @@
 {
-  "name": "license-webpack-plugin",
+  "name": "license-checker-plugin",
   "version": "1.0.0",
   "description": "A webpack 5 plugin to generate third-party license notices for bundled packages",
   "main": "dist/index.js",
