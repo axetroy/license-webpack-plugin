@@ -3,7 +3,7 @@ import { LicenseInfo } from '../model/LicenseInfo';
 import { LicenseCache } from './LicenseCache';
 
 type LicenseCheckerEntry = {
-  licenses?: string;
+  licenses?: string | string[];
   repository?: string;
   publisher?: string;
   email?: string;
@@ -38,8 +38,18 @@ export class LicenseDatabase {
     const packages = await this.loadPackages(startPath);
 
     for (const [key, info] of Object.entries(packages ?? {})) {
+      // license-checker can return licenses as string or string[]
+      let licenseStr = 'UNKNOWN';
+      if (info.licenses) {
+        if (Array.isArray(info.licenses)) {
+          licenseStr = info.licenses.join(' AND ');
+        } else {
+          licenseStr = info.licenses;
+        }
+      }
+
       const licenseInfo: LicenseInfo = {
-        license: info.licenses || 'UNKNOWN',
+        license: licenseStr,
         licenseFile: info.licenseFile,
         licenseText: info.licenseText,
         repository: info.repository,
