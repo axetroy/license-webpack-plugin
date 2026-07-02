@@ -59,10 +59,6 @@ export class LicenseDatabase {
     return this.cache.get(`${packageName}@${packageVersion}`) || { license: 'UNKNOWN' };
   }
 
-  getCache(): LicenseCache {
-    return this.cache;
-  }
-
   private loadPackages(startPath: string): Promise<Record<string, PackageLicenseInfo>> {
     return new Promise((resolve, reject) => {
       builtInLicenseChecker(

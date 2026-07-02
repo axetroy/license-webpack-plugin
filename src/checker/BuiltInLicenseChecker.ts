@@ -3,8 +3,8 @@
  * Replaces license-checker-rseidelsohn functionality
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface LicenseCheckerOptions {
   start: string;

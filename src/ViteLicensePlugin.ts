@@ -10,7 +10,6 @@ interface VitePlugin {
   name: string;
   enforce?: 'pre' | 'post';
   buildStart?: () => void | Promise<void>;
-  resolveId?: (id: string, importer: string | undefined) => string | null | undefined | void;
   transform?: (code: string, id: string) => string | null | undefined | void;
   generateBundle?: (opts: unknown, bundle: unknown) => void | Promise<void>;
 }
@@ -32,11 +31,6 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
         reportWarning: (msg: string) => console.warn(`[${PLUGIN_NAME}] ${msg}`),
       };
       await core.initialize(root, context);
-    },
-
-    resolveId(id: string, importer: string | undefined) {
-      if (!importer || id.startsWith('\0') || id.startsWith('virtual:')) return null;
-      return null;
     },
 
     transform(_code: string, id: string) {
@@ -64,8 +58,6 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
       const { items } = await core.generateLicenseItems(resolvedPackages, context);
       const source = core.format(items);
 
-      // Rollup/Vite 8 compatible emit
-      const outputOptions = { file: core.options.filename, source };
       (this as unknown as { emitFile: (opts: { type: string; fileName: string; source: string }) => void }).emitFile({
         type: 'asset',
         fileName: core.options.filename,

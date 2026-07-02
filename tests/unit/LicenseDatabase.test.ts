@@ -153,10 +153,4 @@ describe('LicenseDatabase', () => {
     });
   });
 
-  describe('getCache', () => {
-    it('returns the internal cache instance', () => {
-      const db = new LicenseDatabase();
-      expect(db.getCache()).toBeDefined();
-    });
-  });
 });

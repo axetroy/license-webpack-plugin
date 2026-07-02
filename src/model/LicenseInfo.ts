@@ -9,7 +9,6 @@ export interface LicenseInfo {
   author?: string;
   publisher?: string;
   private?: boolean;
-  packageJson?: Record<string, unknown>;
 }
 
 export interface OutputItem {

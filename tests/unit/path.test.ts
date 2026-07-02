@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { findPackageRoot, isNodeModule, getNodeModuleName } from '../../src/utils/path';
+import { findPackageRoot, isNodeModule, getNodeModuleName } from '../utils/path';
 
 let tempDir: string;
 

@@ -78,7 +78,7 @@ export default defineConfig({
 | `recordOnly` | `boolean` | `false` | Record findings without emitting (webpack multi-compiler only) |
 | `waitForRecorderCount` | `number` | — | Wait for N reports before emitting combined asset (webpack only) |
 
-> **Note:** `includeChunks`, `recorder`, `recordOnly`, and `waitForRecorderCount` are webpack-only options and are not available in the Vite plugin.
+> **Note:** `recorder`, `recordOnly`, and `waitForRecorderCount` are webpack-only options and are not available in the Vite plugin.
 
 ## How it works
 
