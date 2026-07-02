@@ -218,11 +218,18 @@ function getLicenseString(license: string | object | undefined): string | undefi
 function getRepositoryUrl(repository: string | object | undefined): string | undefined {
   if (!repository) return undefined;
   if (typeof repository === 'string') {
-    return repository
+    let url = repository
       .replace(/^git\+https:\/\//, 'https://')
       .replace(/^git:\/\//, 'https://')
       .replace(/^git\+ssh:\/\/git@/, 'https://')
+      .replace(/^git\+ssh:\/\//, 'https://')
       .replace(/\.git$/, '');
+    // Handle git+ssh://git@hostname:path format (SCP-like syntax)
+    // e.g., git+ssh://git@github.com:user/repo.git -> https://github.com/user/repo
+    if (url.match(/^https:\/\/[^/]+:./)) {
+      url = url.replace(/^https:\/\/([^/]+):\//, 'https://$1/');
+    }
+    return url;
   }
   if (typeof repository === 'object' && 'url' in repository) {
     return getRepositoryUrl((repository as { url: string }).url);
