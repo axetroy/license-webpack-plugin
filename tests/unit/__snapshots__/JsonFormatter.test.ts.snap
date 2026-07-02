@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`JsonFormatter generates valid JSON array 1`] = `
+"[
+  {
+    "name": "lodash",
+    "version": "4.17.21",
+    "license": "MIT",
+    "repository": "https://github.com/lodash/lodash"
+  }
+]"
+`;
+
+exports[`JsonFormatter returns empty array for no items 1`] = `"[]"`;

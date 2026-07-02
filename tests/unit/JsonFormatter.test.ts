@@ -25,11 +25,13 @@ describe('JsonFormatter', () => {
     expect(parsed[0].name).toBe('lodash');
     expect(parsed[0].version).toBe('4.17.21');
     expect(parsed[0].license).toBe('MIT');
+    expect(result).toMatchSnapshot();
   });
 
   it('returns empty array for no items', () => {
     const formatter = new JsonFormatter();
     const result = formatter.generate([]);
     expect(JSON.parse(result)).toEqual([]);
+    expect(result).toMatchSnapshot();
   });
 });

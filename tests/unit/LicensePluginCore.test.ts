@@ -42,6 +42,7 @@ describe('LicensePluginCore — compound license strings', () => {
     expect(errors).toEqual([]);
     expect(items).toHaveLength(1);
     expect(items[0].license.license).toBe('(MIT OR CC0-1.0)');
+    expect(items).toMatchSnapshot();
   });
 
   it('preserves AND expression from array licenses', async () => {
@@ -58,6 +59,7 @@ describe('LicensePluginCore — compound license strings', () => {
     expect(errors).toEqual([]);
     expect(items).toHaveLength(1);
     expect(items[0].license.license).toBe('MIT AND Apache-2.0');
+    expect(items).toMatchSnapshot();
   });
 
   describe('onlyAllow with compound licenses', () => {
@@ -78,6 +80,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toEqual([]);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+      expect(errors).toMatchSnapshot();
     });
 
     it('fails OR expression when exact compound string not in allow list', async () => {
@@ -97,6 +100,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toEqual([]);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+      expect(errors).toMatchSnapshot();
     });
 
     it('allows AND expression when exact compound string is in allow list', async () => {
@@ -115,6 +119,7 @@ describe('LicensePluginCore — compound license strings', () => {
       const { items, errors } = await core.generateLicenseItems(packages, mockContext);
       expect(errors).toEqual([]);
       expect(items).toHaveLength(1);
+      expect(items).toMatchSnapshot();
     });
 
     it('fails AND expression when exact compound string not in allow list', async () => {
@@ -134,6 +139,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toEqual([]);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('MIT AND Apache-2.0');
+      expect(errors).toMatchSnapshot();
     });
   });
 
@@ -161,6 +167,7 @@ describe('LicensePluginCore — compound license strings', () => {
       const v2 = items.find((i) => i.package.version === '2.0.0');
       expect(v1?.license.license).toBe('MIT');
       expect(v2?.license.license).toBe('GPL-3.0');
+      expect(items).toMatchSnapshot();
     });
 
     it('returns UNKNOWN for one version when not in cache', async () => {
@@ -185,6 +192,7 @@ describe('LicensePluginCore — compound license strings', () => {
       const v2 = items.find((i) => i.package.version === '2.0.0');
       expect(v1?.license.license).toBe('MIT');
       expect(v2?.license.license).toBe('UNKNOWN');
+      expect(items).toMatchSnapshot();
     });
 
     it('enforces onlyAllow per-version correctly', async () => {
@@ -210,6 +218,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('GPL-3.0');
       expect(errors[0]).toContain('packageA@2.0.0');
+      expect(errors).toMatchSnapshot();
     });
 
     it('enforces failOn per-version correctly', async () => {
@@ -235,6 +244,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('GPL-3.0');
       expect(errors[0]).toContain('packageA@2.0.0');
+      expect(errors).toMatchSnapshot();
     });
   });
 
@@ -256,6 +266,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toEqual([]);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('(MIT OR Apache-2.0)');
+      expect(errors).toMatchSnapshot();
     });
 
     it('passes OR expression when compound string does not match fail list', async () => {
@@ -274,6 +285,7 @@ describe('LicensePluginCore — compound license strings', () => {
       const { items, errors } = await core.generateLicenseItems(packages, mockContext);
       expect(errors).toEqual([]);
       expect(items).toHaveLength(1);
+      expect(items).toMatchSnapshot();
     });
 
     it('fails AND expression when exact compound string matches fail list', async () => {
@@ -293,6 +305,7 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items).toEqual([]);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]).toContain('MIT AND Apache-2.0');
+      expect(errors).toMatchSnapshot();
     });
 
     it('passes AND expression when compound string does not match fail list', async () => {
@@ -311,6 +324,7 @@ describe('LicensePluginCore — compound license strings', () => {
       const { items, errors } = await core.generateLicenseItems(packages, mockContext);
       expect(errors).toEqual([]);
       expect(items).toHaveLength(1);
+      expect(items).toMatchSnapshot();
     });
   });
 });

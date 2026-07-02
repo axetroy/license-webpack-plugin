@@ -1,0 +1,78 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TxtFormatter formats author email even without whitespace before angle brackets 1`] = `
+"# THIRD-PARTY LICENSES
+
+Package Name : react
+Version      : 18.0.0
+License      : MIT
+Repository   : https://github.com/facebook/react
+Author       : Example <a>example@example.com</a>
+
+License Text:
+MIT License
+Copyright (c) Facebook
+"
+`;
+
+exports[`TxtFormatter generates txt output with license text by default 1`] = `
+"# THIRD-PARTY LICENSES
+
+Package Name : react
+Version      : 18.0.0
+License      : MIT
+Repository   : https://github.com/facebook/react
+Author       : Meta Open Source <a>opensource@meta.com</a>
+
+License Text:
+MIT License
+Copyright (c) Facebook
+"
+`;
+
+exports[`TxtFormatter handles empty items 1`] = `
+"# THIRD-PARTY LICENSES
+
+"
+`;
+
+exports[`TxtFormatter normalizes author email with extra whitespace inside brackets 1`] = `
+"# THIRD-PARTY LICENSES
+
+Package Name : react
+Version      : 18.0.0
+License      : MIT
+Repository   : https://github.com/facebook/react
+Author       : Example Maintainer <a>maintainer@example.com</a>
+
+License Text:
+MIT License
+Copyright (c) Facebook
+"
+`;
+
+exports[`TxtFormatter omits license text when includeLicenseText is false 1`] = `
+"# THIRD-PARTY LICENSES
+
+Package Name : react
+Version      : 18.0.0
+License      : MIT
+Repository   : https://github.com/facebook/react
+Author       : Meta Open Source <a>opensource@meta.com</a>
+"
+`;
+
+exports[`TxtFormatter outputs plain author string when no email exists 1`] = `
+"# THIRD-PARTY LICENSES
+
+Package Name : react
+Version      : 18.0.0
+License      : MIT
+Repository   : https://github.com/facebook/react
+Author       : Meta Open Source Team
+
+License Text:
+MIT License
+Copyright (c) Facebook
+"
+`;

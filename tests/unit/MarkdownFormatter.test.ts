@@ -22,6 +22,7 @@ describe('MarkdownFormatter', () => {
     expect(result).toContain('# Third Party Licenses');
     expect(result).toContain('| Package | Version | License |');
     expect(result).toContain('| axios | 1.0.0 | MIT |');
+    expect(result).toMatchSnapshot();
   });
 
   it('returns header only for empty items', () => {

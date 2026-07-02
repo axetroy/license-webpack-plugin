@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MarkdownFormatter generates markdown table 1`] = `
+"# Third Party Licenses
+
+| Package | Version | License |
+|---------|---------|---------|
+| axios | 1.0.0 | MIT |
+"
+`;

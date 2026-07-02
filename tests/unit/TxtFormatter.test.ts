@@ -32,6 +32,7 @@ describe('TxtFormatter', () => {
     expect(result).toContain('Author       : Meta Open Source <a>opensource@meta.com</a>');
     expect(result).toContain('License Text:');
     expect(result).toContain('MIT License');
+    expect(result).toMatchSnapshot();
   });
 
   it('omits license text when includeLicenseText is false', () => {
@@ -40,12 +41,14 @@ describe('TxtFormatter', () => {
     expect(result).toContain('Package Name : react');
     expect(result).not.toContain('License Text:');
     expect(result).not.toContain('MIT License\nCopyright');
+    expect(result).toMatchSnapshot();
   });
 
   it('handles empty items', () => {
     const formatter = new TxtFormatter();
     const result = formatter.generate([]);
     expect(result).toContain('# THIRD-PARTY LICENSES');
+    expect(result).toMatchSnapshot();
   });
 
   it('outputs plain author string when no email exists', () => {
@@ -60,6 +63,7 @@ describe('TxtFormatter', () => {
       },
     ]);
     expect(result).toContain('Author       : Meta Open Source Team');
+    expect(result).toMatchSnapshot();
   });
 
   it('normalizes author email with extra whitespace inside brackets', () => {
@@ -74,6 +78,7 @@ describe('TxtFormatter', () => {
       },
     ]);
     expect(result).toContain('Author       : Example Maintainer <a>maintainer@example.com</a>');
+    expect(result).toMatchSnapshot();
   });
 
   it('formats author email even without whitespace before angle brackets', () => {
@@ -88,5 +93,6 @@ describe('TxtFormatter', () => {
       },
     ]);
     expect(result).toContain('Author       : Example <a>example@example.com</a>');
+    expect(result).toMatchSnapshot();
   });
 });

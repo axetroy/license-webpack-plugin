@@ -23,6 +23,7 @@ describe('HtmlFormatter', () => {
     expect(result).toContain('Third Party Licenses');
     expect(result).toContain('vue');
     expect(result).toContain('MIT');
+    expect(result).toMatchSnapshot();
   });
 
   it('escapes html characters', () => {
