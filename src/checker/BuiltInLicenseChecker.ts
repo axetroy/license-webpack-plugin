@@ -5,6 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import spdxExpressionParse from 'spdx-expression-parse';
 
 export interface LicenseCheckerOptions {
   start: string;
@@ -39,14 +40,6 @@ const LICENSE_BASENAMES = [
   /^COPYRIGHT$/i,
 ];
 
-// SPDX license identifiers that are valid (stored uppercase for case-insensitive comparison)
-const VALID_SPDX_LICENSES = new Set([
-  'MIT', 'APACHE-2.0', 'APACHE2', 'APACHE 2.0', 'BSD-2-CLAUSE', 'BSD-3-CLAUSE', 'BSD-3-CLAUSE-CLEAR',
-  'ISC', 'GPL-2.0', 'GPL-3.0', 'LGPL-2.1', 'LGPL-3.0', 'MPL-2.0', '0BSD', 'UNLICENSE', 'CC0-1.0',
-  'CC-BY-3.0', 'CC-BY-4.0', 'WTFPL', 'ZLIB', 'POSTGRESQL', 'PYTHON-2.0', 'RUBY', 'ARTISTIC-2.0',
-  'BSL-1.0', 'EPL-1.0', 'EPL-2.0', 'EUPL-1.1', 'EUPL-1.2', 'AGPL-3.0', 'OSL-3.0',
-]);
-
 // Regex patterns for detecting licenses in file content
 type LicensePattern = [RegExp, string];
 const LICENSE_PATTERNS: LicensePattern[] = [
@@ -73,43 +66,16 @@ const COPYRIGHT_PATTERNS = [
 ];
 
 /**
- * Parse a SPDX license expression
+ * Check if a license string is a valid SPDX expression. Returns the original
+ * string if valid, or "Custom" for non-standard license declarations.
  */
-function parseSpdxExpression(license: string): string | null {
-  const trimmed = license.trim();
-
-  if (trimmed.includes(' OR ')) {
-    const parts = trimmed.split(/\s+OR\s+/);
-    const parsed = parts.map((p) => parseSpdxExpression(p.trim())).filter(Boolean);
-    if (parsed.length > 0) {
-      return parsed.join(' OR ');
-    }
-    return null;
+export function normalizeLicense(license: string): string {
+  try {
+    spdxExpressionParse(license);
+    return license;
+  } catch {
+    return 'Custom';
   }
-
-  if (trimmed.includes(' AND ')) {
-    const parts = trimmed.split(/\s+AND\s+/);
-    const parsed = parts.map((p) => parseSpdxExpression(p.trim())).filter(Boolean);
-    if (parsed.length === parts.length) {
-      return parsed.join(' AND ');
-    }
-    return null;
-  }
-
-  const parenMatch = trimmed.match(/^\(([^)]+)\)$/);
-  if (parenMatch) {
-    return parseSpdxExpression(parenMatch[1]);
-  }
-
-  const prefixMatch = trimmed.match(/^([A-Za-z0-9\-\.]+)(?:\s+OR\s+.*)?$/);
-  if (prefixMatch) {
-    const licenseId = prefixMatch[1].toUpperCase().replace(/\s+/g, '-');
-    if (VALID_SPDX_LICENSES.has(licenseId)) {
-      return prefixMatch[1];
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -186,16 +152,6 @@ function getLicenseString(license: string | object | undefined): string | undefi
     return String((license as { type: string }).type);
   }
   return undefined;
-}
-
-/**
- * Check if a license string is a valid SPDX expression (known identifiers
- * joined by AND/OR). Returns the canonical form if valid, or "Custom" for
- * non-standard license declarations.
- */
-export function normalizeLicense(license: string): string {
-  const parsed = parseSpdxExpression(license);
-  return parsed || 'Custom';
 }
 
 /**
