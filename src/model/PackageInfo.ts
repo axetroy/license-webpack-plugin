@@ -10,4 +10,5 @@ export interface PackageInfo {
   author?: string;
   publisher?: string;
   private?: boolean;
+  license?: string;
 }

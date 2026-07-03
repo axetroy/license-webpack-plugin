@@ -34,4 +34,45 @@ describe('JsonFormatter', () => {
     expect(JSON.parse(result)).toEqual([]);
     expect(result).toMatchSnapshot();
   });
+
+  it('includes licenseText when present', () => {
+    const items: OutputItem[] = [
+      {
+        package: {
+          name: 'react',
+          version: '18.0.0',
+          path: '',
+          packageJsonPath: '',
+          chunks: [],
+          modules: [],
+        },
+        license: { license: 'MIT', licenseText: 'MIT License Text' },
+      },
+    ];
+    const formatter = new JsonFormatter();
+    const result = formatter.generate(items);
+    const parsed = JSON.parse(result);
+    expect(parsed[0].licenseText).toBe('MIT License Text');
+    expect(result).toMatchSnapshot();
+  });
+
+  it('omits licenseText when not present', () => {
+    const items: OutputItem[] = [
+      {
+        package: {
+          name: 'lodash',
+          version: '4.17.21',
+          path: '',
+          packageJsonPath: '',
+          chunks: [],
+          modules: [],
+        },
+        license: { license: 'MIT' },
+      },
+    ];
+    const formatter = new JsonFormatter();
+    const result = formatter.generate(items);
+    const parsed = JSON.parse(result);
+    expect(parsed[0].licenseText).toBeUndefined();
+  });
 });

@@ -11,4 +11,15 @@ exports[`JsonFormatter generates valid JSON array 1`] = `
 ]"
 `;
 
+exports[`JsonFormatter includes licenseText when present 1`] = `
+"[
+  {
+    "name": "react",
+    "version": "18.0.0",
+    "license": "MIT",
+    "licenseText": "MIT License Text"
+  }
+]"
+`;
+
 exports[`JsonFormatter returns empty array for no items 1`] = `"[]"`;

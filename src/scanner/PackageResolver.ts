@@ -4,6 +4,8 @@ import { PackageInfo } from '../model/PackageInfo';
 import { normalizeRepositoryUrl, parseAuthor } from '../checker/BuiltInLicenseChecker';
 
 export class PackageResolver {
+  private readonly cache = new Map<string, PackageInfo>();
+
   resolve(modulePath: string, chunkName: string): PackageInfo | null {
     if (!modulePath || !modulePath.includes('node_modules')) {
       return null;
@@ -36,6 +38,12 @@ export class PackageResolver {
       normalizedPath.slice(0, nodeModulesIdx + '/node_modules/'.length).replace(/\//g, path.sep),
       packageName.replace(/\//g, path.sep)
     );
+
+    const cached = this.cache.get(packageRoot);
+    if (cached) {
+      return this.mergeModuleInfo(cached, chunkName, modulePath);
+    }
+
     const packageJsonPath = path.join(packageRoot, 'package.json');
 
     try {
@@ -43,6 +51,8 @@ export class PackageResolver {
       const pkg = JSON.parse(rawContent) as {
         name?: string;
         version?: string;
+        license?: string | { type?: string };
+        licenses?: Array<{ type?: string }>;
         repository?: string | { url?: string; type?: string };
         homepage?: string;
         author?: string | { name?: string; email?: string };
@@ -62,7 +72,14 @@ export class PackageResolver {
       const publisher = parsed.name;
       const author = parsed.email ? `${parsed.name || ''} <${parsed.email}>`.trim() : parsed.name;
 
-      return {
+      let license: string | undefined;
+      if (pkg.license) {
+        license = typeof pkg.license === 'string' ? pkg.license : (pkg.license as { type?: string }).type;
+      } else if (Array.isArray(pkg.licenses)) {
+        license = pkg.licenses.map((l) => l.type || 'UNKNOWN').join(' AND ');
+      }
+
+      const info: PackageInfo = {
         name: pkg.name || packageName,
         version: pkg.version || 'unknown',
         path: packageRoot,
@@ -74,9 +91,22 @@ export class PackageResolver {
         author,
         publisher,
         private: pkg.private === true,
+        license,
       };
+
+      this.cache.set(packageRoot, info);
+      return info;
     } catch {
       return null;
     }
+  }
+
+  private mergeModuleInfo(existing: PackageInfo, chunkName: string, modulePath: string): PackageInfo {
+    if (!existing.chunks.includes(chunkName) || !existing.modules.includes(modulePath)) {
+      const chunks = existing.chunks.includes(chunkName) ? existing.chunks : [...existing.chunks, chunkName];
+      const modules = existing.modules.includes(modulePath) ? existing.modules : [...existing.modules, modulePath];
+      return { ...existing, chunks, modules };
+    }
+    return existing;
   }
 }

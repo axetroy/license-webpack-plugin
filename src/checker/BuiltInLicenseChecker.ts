@@ -34,24 +34,6 @@ const LICENSE_BASENAMES = [
   /^COPYRIGHT$/i,
 ];
 
-type LicensePattern = [RegExp, string];
-const LICENSE_PATTERNS: LicensePattern[] = [
-  [/permission is hereby granted, free of charge, to any person obtaining a copy of this software/i, 'MIT*'],
-  [/redistribution and use in source and binary forms, with or without modification, are permitted/i, 'BSD*'],
-  [/licensed under the apache license, version 2\.0/i, 'Apache-2.0*'],
-  [/apache license[\s\n]+version[\s\n]+2/i, 'Apache-2.0*'],
-  [/the isc license/i, 'ISC*'],
-  [/\bMIT\b/, 'MIT*'],
-  [/\bApache(?:\s+License)?\b/i, 'Apache*'],
-  [/\bBSD\b/, 'BSD*'],
-  [/\bISC\b/, 'ISC*'],
-  [/gnu general public license/i, 'GPL*'],
-  [/gnu lesser\/library general public license/i, 'LGPL*'],
-  [/cc0 1\.0 universal/i, 'CC0-1.0*'],
-  [/public domain/i, 'Public Domain'],
-  [/do what the f\*ck you want to public license/i, 'WTFPL*'],
-];
-
 const COPYRIGHT_PATTERNS = [
   /©?\s*copyright\s+(?:\(c\)\s*)?(\d{4}(?:\s*-\s*\d{4})?)\s+([^\n\r]+)/gi,
   /©\s*(\d{4}(?:\s*-\s*\d{4})?)\s+([^\n\r]+)/gi,

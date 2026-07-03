@@ -108,4 +108,56 @@ describe('PackageResolver', () => {
     expect(result).not.toBeNull();
     expect(result!.name).toBe('win-pkg');
   });
+
+  it('caches results and returns same PackageInfo for same package root', () => {
+    const pkgDir = createPackage('cached-pkg', '1.0.0', { license: 'MIT' });
+    const module1 = path.join(pkgDir, 'index.js');
+    const module2 = path.join(pkgDir, 'utils.js');
+    const resolver = new PackageResolver();
+
+    const result1 = resolver.resolve(module1, 'main');
+    const result2 = resolver.resolve(module2, 'vendor');
+
+    expect(result1).not.toBeNull();
+    expect(result2).not.toBeNull();
+    expect(result1!.name).toBe('cached-pkg');
+    expect(result1!.version).toBe('1.0.0');
+    expect(result1!.license).toBe('MIT');
+    expect(result1!.chunks).toEqual(['main']);
+    expect(result1!.modules).toEqual([module1]);
+    expect(result2!.chunks).toEqual(['main', 'vendor']);
+    expect(result2!.modules).toEqual([module1, module2]);
+  });
+
+  it('returns license string from package.json', () => {
+    const pkgDir = createPackage('licensed-pkg', '2.0.0', { license: 'Apache-2.0' });
+    const modulePath = path.join(pkgDir, 'index.js');
+    const resolver = new PackageResolver();
+    const result = resolver.resolve(modulePath, 'main');
+    expect(result!.license).toBe('Apache-2.0');
+  });
+
+  it('handles licenses array in package.json', () => {
+    const pkgDir = createPackage('multi-license-pkg', '1.0.0', { licenses: [{ type: 'MIT' }, { type: 'Apache-2.0' }] });
+    const modulePath = path.join(pkgDir, 'index.js');
+    const resolver = new PackageResolver();
+    const result = resolver.resolve(modulePath, 'main');
+    expect(result!.license).toBe('MIT AND Apache-2.0');
+  });
+
+  it('returns undefined license when package.json has no license field', () => {
+    const pkgDir = createPackage('no-license-pkg', '1.0.0', {});
+    const modulePath = path.join(pkgDir, 'index.js');
+    const resolver = new PackageResolver();
+    const result = resolver.resolve(modulePath, 'main');
+    expect(result!.license).toBeUndefined();
+  });
+
+  it('handles license object syntax { type }', () => {
+    const pkgDir = createPackage('obj-license-pkg', '1.0.0', { license: { type: 'MIT' } });
+    const modulePath = path.join(pkgDir, 'index.js');
+    const resolver = new PackageResolver();
+    const result = resolver.resolve(modulePath, 'main');
+    expect(result!.license).toBe('MIT');
+  });
 });

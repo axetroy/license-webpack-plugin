@@ -7,7 +7,7 @@ export class LicenseDatabase {
   private initialized = false;
   private initializedPath: string | null = null;
 
-  async initialize(startPath: string): Promise<void> {
+  async initialize(startPath: string, includeLicenseText?: boolean): Promise<void> {
     if (this.initialized && this.initializedPath === startPath) {
       return;
     }
@@ -19,7 +19,7 @@ export class LicenseDatabase {
       start: startPath,
       excludePrivatePackages: false,
       customFormat: {
-        licenseText: true,
+        licenseText: includeLicenseText !== false,
       },
     });
 

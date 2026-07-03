@@ -81,4 +81,34 @@ describe('MarkdownFormatter', () => {
     const result = formatter.generate(items);
     expect(result).toContain('| a|b | 1.0 | MIT |');
   });
+
+  it('includes license text column when any item has licenseText', () => {
+    const items: OutputItem[] = [
+      {
+        package: { name: 'pkg-a', version: '1.0', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT', licenseText: 'MIT License Text' },
+      },
+      {
+        package: { name: 'pkg-b', version: '2.0', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'Apache-2.0' },
+      },
+    ];
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(items);
+    expect(result).toContain('| Package | Version | License | License Text |');
+    expect(result).toContain('MIT License Text');
+    expect(result).toMatchSnapshot();
+  });
+
+  it('escapes newlines in license text with <br>', () => {
+    const items: OutputItem[] = [
+      {
+        package: { name: 'pkg', version: '1.0', path: '', packageJsonPath: '', chunks: [], modules: [] },
+        license: { license: 'MIT', licenseText: 'Line1\nLine2\nLine3' },
+      },
+    ];
+    const formatter = new MarkdownFormatter();
+    const result = formatter.generate(items);
+    expect(result).toContain('Line1<br>Line2<br>Line3');
+  });
 });

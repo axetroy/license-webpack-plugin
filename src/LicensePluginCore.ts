@@ -115,7 +115,7 @@ export class LicensePluginCore {
     }
 
     try {
-      await this.db.initialize(startPath);
+      await this.db.initialize(startPath, this.options.includeLicenseText);
       return true;
     } catch (error) {
       context.reportError(`LicensePlugin: Failed to initialize license database: ${String(error)}`);
@@ -164,7 +164,11 @@ export class LicensePluginCore {
       let licenseInfo = this.db.getLicense(pkgInfo.name, pkgInfo.version);
 
       if (licenseInfo.license === 'UNKNOWN') {
-        licenseInfo = this.readLicenseFromPackage(pkgInfo);
+        if (pkgInfo.license) {
+          licenseInfo = { license: pkgInfo.license };
+        } else {
+          licenseInfo = this.readLicenseFromPackage(pkgInfo);
+        }
       }
 
       entries.push({

@@ -113,6 +113,39 @@ describe('LicenseDatabase', () => {
       const db = new LicenseDatabase();
       await expect(db.initialize('/workspace')).rejects.toThrow('checker failed');
     });
+
+    it('passes licenseText: true when includeLicenseText is true', async () => {
+      mockCheckerResult({});
+      const db = new LicenseDatabase();
+      await db.initialize('/workspace', true);
+      expect(mockedChecker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customFormat: expect.objectContaining({ licenseText: true }),
+        })
+      );
+    });
+
+    it('passes licenseText: false when includeLicenseText is false', async () => {
+      mockCheckerResult({});
+      const db = new LicenseDatabase();
+      await db.initialize('/workspace', false);
+      expect(mockedChecker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customFormat: expect.objectContaining({ licenseText: false }),
+        })
+      );
+    });
+
+    it('defaults licenseText to true when includeLicenseText is not set', async () => {
+      mockCheckerResult({});
+      const db = new LicenseDatabase();
+      await db.initialize('/workspace');
+      expect(mockedChecker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customFormat: expect.objectContaining({ licenseText: true }),
+        })
+      );
+    });
   });
 
   describe('getLicense', () => {
