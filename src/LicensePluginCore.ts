@@ -27,8 +27,12 @@ export interface LicensePluginOptions {
   includeHomepage?: boolean;
   /** Include the author/publisher in each entry. */
   includeAuthor?: boolean;
-  /** Exclude specific packages from the output by name. */
-  excludePackages?: string[];
+  /**
+   * Exclude specific packages from the output.
+   * Can be a list of package names, or a predicate function
+   * `(packageName: string) => boolean`.
+   */
+  excludePackages?: (string | ((name: string) => boolean))[];
   /**
    * Allow only these licenses. When set, the build fails if any bundled
    * package has a license not in this list.
@@ -151,7 +155,7 @@ export class LicensePluginCore {
   ): Array<{ info: PackageInfo; licenseInfo: LicenseInfo }> {
     const entries: Array<{ info: PackageInfo; licenseInfo: LicenseInfo }> = [];
     for (const pkgInfo of packages.values()) {
-      if (this.options.excludePackages.includes(pkgInfo.name)) continue;
+      if (this.options.excludePackages.some((e) => (typeof e === 'function' ? e(pkgInfo.name) : e === pkgInfo.name))) continue;
 
       let licenseInfo = this.db.getLicense(pkgInfo.name, pkgInfo.version);
 
