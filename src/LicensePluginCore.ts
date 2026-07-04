@@ -188,7 +188,8 @@ export class LicensePluginCore {
         errors.push(
           `LicensePlugin: License "${licenseInfo.license}" for package "${info.name}@${info.version}" is not in the allowed list: ${this.options.onlyAllow.join(', ')}`
         );
-      } else if (this.options.failOn.length > 0 && this.isFailed(licenseInfo.license)) {
+      }
+      if (this.options.failOn.length > 0 && this.isFailed(licenseInfo.license)) {
         errors.push(
           `LicensePlugin: License "${licenseInfo.license}" for package "${info.name}@${info.version}" is in the fail list`
         );

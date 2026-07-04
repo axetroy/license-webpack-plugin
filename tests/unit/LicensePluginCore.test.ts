@@ -454,5 +454,27 @@ describe('LicensePluginCore — compound license strings', () => {
       expect(items[0].license.license).toBe('Custom');
       expect(items).toMatchSnapshot();
     });
+
+    it('reports errors for both onlyAllow and failOn violations on same package', async () => {
+      MockLicenseDatabase.prototype.getLicense.mockReturnValue({
+        license: 'GPL-3.0',
+      });
+      const core = new LicensePluginCore({
+        onlyAllow: ['MIT', 'Apache-2.0'],
+        failOn: ['GPL-3.0'],
+        workspaceRoot: '/test',
+      });
+      await core.initialize('/test', mockContext);
+
+      const packages = new Map<string, PackageInfo>();
+      packages.set('test@1.0.0', makePackage('test', '1.0.0'));
+
+      const { items, errors } = await core.generateLicenseItems(packages, mockContext);
+      expect(items).toEqual([]);
+      // Both onlyAllow and failOn should report errors
+      expect(errors.length).toBe(2);
+      expect(errors.some((e) => e.includes('onlyAllow') || e.includes('not in the allowed list'))).toBe(true);
+      expect(errors.some((e) => e.includes('fail list'))).toBe(true);
+    });
   });
 });
