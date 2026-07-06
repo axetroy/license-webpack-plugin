@@ -26,6 +26,7 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
 
     async buildStart() {
       const root = options.workspaceRoot || process.cwd();
+      resolver.setProjectRoot(root);
       const context = {
         reportError: (msg: string) => { throw new Error(msg); },
         reportWarning: (msg: string) => console.warn(`[${PLUGIN_NAME}] ${msg}`),

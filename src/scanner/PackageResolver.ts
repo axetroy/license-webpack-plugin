@@ -3,8 +3,39 @@ import * as path from 'path';
 import { PackageInfo } from '../model/PackageInfo';
 import { normalizeRepositoryUrl, parseAuthor } from '../checker/BuiltInLicenseChecker';
 
+interface ProjectPackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}
+
 export class PackageResolver {
   private readonly cache = new Map<string, PackageInfo>();
+  private projectDependencies: Set<string> | null = null;
+
+  /**
+   * Set the project root path to load package.json and detect direct dependencies.
+   * Should be called before resolve() when used in a scanner context.
+   */
+  setProjectRoot(projectRoot: string): void {
+    this.projectDependencies = null;
+    try {
+      const packageJsonPath = path.join(projectRoot, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const content = fs.readFileSync(packageJsonPath, 'utf-8');
+        const pkg: ProjectPackageJson = JSON.parse(content);
+        const deps = new Set<string>();
+        if (pkg.dependencies) {
+          Object.keys(pkg.dependencies).forEach((key) => deps.add(key));
+        }
+        if (pkg.devDependencies) {
+          Object.keys(pkg.devDependencies).forEach((key) => deps.add(key));
+        }
+        this.projectDependencies = deps;
+      }
+    } catch {
+      // Ignore errors loading package.json
+    }
+  }
 
   resolve(modulePath: string, chunkName: string): PackageInfo | null {
     if (!modulePath || !modulePath.includes('node_modules')) {
@@ -79,6 +110,9 @@ export class PackageResolver {
         license = pkg.licenses.map((l) => l.type || 'UNKNOWN').join(' AND ');
       }
 
+      // Check if this package is listed in the project's dependencies or devDependencies
+      const isDirect = this.projectDependencies?.has(packageName) ?? false;
+
       const info: PackageInfo = {
         name: pkg.name || packageName,
         version: pkg.version || 'unknown',
@@ -92,6 +126,7 @@ export class PackageResolver {
         publisher,
         private: pkg.private === true,
         license,
+        direct: isDirect,
       };
 
       this.cache.set(packageRoot, info);
