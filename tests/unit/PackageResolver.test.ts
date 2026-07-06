@@ -159,4 +159,98 @@ describe('PackageResolver', () => {
     const result = resolver.resolve(modulePath, 'main');
     expect(result!.license).toBe('MIT');
   });
+
+  describe('direct field', () => {
+    it('marks package as direct when listed in project dependencies', () => {
+      // Create project package.json
+      fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({
+        dependencies: { 'direct-dep': '^1.0.0' }
+      }));
+
+      const pkgDir = path.join(tempDir, 'node_modules', 'direct-dep');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'direct-dep', version: '1.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      resolver.setProjectRoot(tempDir);
+      const result = resolver.resolve(modulePath, 'main');
+      expect(result!.direct).toBe(true);
+    });
+
+    it('marks package as direct when listed in project devDependencies', () => {
+      // Create project package.json
+      fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({
+        devDependencies: { 'direct-dev-dep': '^2.0.0' }
+      }));
+
+      const pkgDir = path.join(tempDir, 'node_modules', 'direct-dev-dep');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'direct-dev-dep', version: '2.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      resolver.setProjectRoot(tempDir);
+      const result = resolver.resolve(modulePath, 'main');
+      expect(result!.direct).toBe(true);
+    });
+
+    it('marks package as indirect when not listed in project dependencies', () => {
+      // Create project package.json without the dependency
+      fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({
+        dependencies: { 'other-dep': '^1.0.0' }
+      }));
+
+      const pkgDir = path.join(tempDir, 'node_modules', 'indirect-dep');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'indirect-dep', version: '2.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      resolver.setProjectRoot(tempDir);
+      const result = resolver.resolve(modulePath, 'main');
+      expect(result!.direct).toBe(false);
+    });
+
+    it('marks scoped package as direct when listed in project dependencies', () => {
+      // Create project package.json
+      fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({
+        dependencies: { '@scope/direct': '^1.0.0' }
+      }));
+
+      const pkgDir = path.join(tempDir, 'node_modules', '@scope', 'direct');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: '@scope/direct', version: '1.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      resolver.setProjectRoot(tempDir);
+      const result = resolver.resolve(modulePath, 'main');
+      expect(result!.direct).toBe(true);
+    });
+
+    it('marks nested package as direct when listed in project dependencies', () => {
+      // Even if package is nested, if it's declared in project's package.json, it's a direct dependency
+      fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify({
+        dependencies: { 'nested-dep': '^1.0.0' }
+      }));
+
+      const pkgDir = path.join(tempDir, 'node_modules', 'parent', 'node_modules', 'nested-dep');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'nested-dep', version: '2.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      resolver.setProjectRoot(tempDir);
+      const result = resolver.resolve(modulePath, 'main');
+      // Package is in package.json dependencies, so it's direct
+      expect(result!.direct).toBe(true);
+    });
+
+    it('defaults to false when project package.json does not exist', () => {
+      const pkgDir = path.join(tempDir, 'node_modules', 'some-dep');
+      fs.mkdirSync(pkgDir, { recursive: true });
+      fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'some-dep', version: '1.0.0' }));
+      const modulePath = path.join(pkgDir, 'index.js');
+      const resolver = new PackageResolver();
+      // Don't call setProjectRoot
+      const result = resolver.resolve(modulePath, 'main');
+      expect(result!.direct).toBe(false);
+    });
+  });
 });

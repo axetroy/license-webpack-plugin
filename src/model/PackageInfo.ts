@@ -11,4 +11,6 @@ export interface PackageInfo {
   publisher?: string;
   private?: boolean;
   license?: string;
+  /** Whether this package is a direct dependency of the project (listed in package.json dependencies or devDependencies). */
+  direct?: boolean;
 }
