@@ -74,14 +74,28 @@ describe('resolvePolicy', () => {
     expect(r.deny).toContain('AGPL-3.0');
   });
 
-  it('strong copyleft presets deny GPL/AGPL/SSPL variants', () => {
+  it('strong copyleft presets deny GPL/AGPL/SSPL variants including -only/-or-later', () => {
     const r = resolvePolicy({ preset: 'commercial' });
     expect(r.deny).toContain('GPL-2.0');
+    expect(r.deny).toContain('GPL-2.0-only');
+    expect(r.deny).toContain('GPL-2.0-or-later');
+    expect(r.deny).toContain('GPL-3.0-only');
     expect(r.deny).toContain('AGPL-3.0');
+    expect(r.deny).toContain('AGPL-3.0-only');
+    expect(r.deny).toContain('AGPL-3.0-or-later');
     expect(r.deny).toContain('AGPL-1.0');
     expect(r.deny).toContain('SSPL-1.0');
     expect(r.deny).toContain('OSL-3.0');
     expect(r.deny).toContain('RPL-1.5');
+  });
+
+  it('weak copyleft list includes LGPL -only/-or-later variants', () => {
+    const r = resolvePolicy({ preset: 'commercial' });
+    expect(r.allow).toContain('LGPL-2.1');
+    expect(r.allow).toContain('LGPL-2.1-only');
+    expect(r.allow).toContain('LGPL-2.1-or-later');
+    expect(r.allow).toContain('LGPL-3.0-only');
+    expect(r.allow).toContain('LGPL-3.0-or-later');
   });
 
   it('oss preset has empty lists', () => {

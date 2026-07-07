@@ -59,6 +59,21 @@ describe('evaluateLicense', () => {
     expect(evaluateLicense('AGPL-1.0', commercial).status).toBe('FAIL');
   });
 
+  it('commercial: fails AGPL-3.0-or-later (SPDX modern variant)', () => {
+    expect(evaluateLicense('AGPL-3.0-or-later', commercial).status).toBe('FAIL');
+  });
+
+  it('commercial: fails GPL-2.0-only (SPDX modern variant)', () => {
+    expect(evaluateLicense('GPL-2.0-only', commercial).status).toBe('FAIL');
+  });
+
+  it('commercial: fails LGPL-2.1 is allowed but LGPL-2.1-or-later should also be', () => {
+    // LGPL-2.1 is weak copyleft → allowed in commercial
+    expect(evaluateLicense('LGPL-2.1', commercial).status).toBe('PASS');
+    expect(evaluateLicense('LGPL-2.1-only', commercial).status).toBe('PASS');
+    expect(evaluateLicense('LGPL-2.1-or-later', commercial).status).toBe('PASS');
+  });
+
   it('commercial: fails OSL-3.0 (strong copyleft)', () => {
     expect(evaluateLicense('OSL-3.0', commercial).status).toBe('FAIL');
   });

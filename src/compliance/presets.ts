@@ -22,8 +22,13 @@ const PERMISSIVE_LICENSES = [
 ];
 
 const WEAK_COPYLEFT = [
+  // LGPL family: deprecated form + modern SPDX variants
   'LGPL-2.1',
+  'LGPL-2.1-only',
+  'LGPL-2.1-or-later',
   'LGPL-3.0',
+  'LGPL-3.0-only',
+  'LGPL-3.0-or-later',
   'MPL-2.0',
   'EPL-1.0',
   'EPL-2.0',
@@ -33,10 +38,18 @@ const WEAK_COPYLEFT = [
 ];
 
 const STRONG_COPYLEFT = [
+  // GPL family: deprecated form + modern SPDX variants
   'GPL-2.0',
+  'GPL-2.0-only',
+  'GPL-2.0-or-later',
   'GPL-3.0',
+  'GPL-3.0-only',
+  'GPL-3.0-or-later',
   'AGPL-1.0',
+  // AGPL v3: deprecated form + modern SPDX variants
   'AGPL-3.0',
+  'AGPL-3.0-only',
+  'AGPL-3.0-or-later',
   'SSPL-1.0',
   'OSL-3.0',
   'RPL-1.5',
