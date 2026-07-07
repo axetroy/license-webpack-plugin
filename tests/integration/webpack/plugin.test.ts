@@ -411,6 +411,113 @@ describe('LicenseWebpackPlugin integration', () => {
     });
   });
 
+  describe('real-world AGPL package (ua-parser-js)', () => {
+    it('commercial preset fails with AGPL-3.0-or-later package', async () => {
+      const outputPath = prepareOutputDir('ua-parser-commercial-fail');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry-ua-parser-js.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'commercial' },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(true);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
+    });
+
+    it('commercial preset with deny override allows AGPL-3.0-or-later', async () => {
+      const outputPath = prepareOutputDir('ua-parser-commercial-override');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry-ua-parser-js.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'commercial', deny: [] },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(false);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(true);
+    });
+
+    it('strict preset fails AGPL-3.0-or-later not in allow list', async () => {
+      const outputPath = prepareOutputDir('ua-parser-strict-fail');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry-ua-parser-js.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'strict', allow: ['MIT'] },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(true);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
+    });
+
+    it('oss preset allows AGPL-3.0-or-later (no restrictions)', async () => {
+      const outputPath = prepareOutputDir('ua-parser-oss-pass');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry-ua-parser-js.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'oss' },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(false);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(true);
+    });
+
+    it('enterprise preset fails AGPL-3.0-or-later (strong copyleft)', async () => {
+      const outputPath = prepareOutputDir('ua-parser-enterprise-fail');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry-ua-parser-js.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'enterprise' },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(true);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
+    });
+  });
+
   it('generates txt output snapshot for core-util-is package', async () => {
     fs.mkdirSync(path.join(CORE_UTIL_IS_DIR, 'lib'), { recursive: true });
     fs.writeFileSync(path.join(CORE_UTIL_IS_DIR, 'package.json'), JSON.stringify({
