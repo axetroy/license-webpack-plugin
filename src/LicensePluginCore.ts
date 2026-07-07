@@ -1,6 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
-import spdxExpressionParse from 'spdx-expression-parse';
 import { LicenseDatabase } from './checker/LicenseDatabase.js';
 import { normalizeLicense } from './checker/BuiltInLicenseChecker.js';
 import { Formatter } from './formatter/Formatter.js';
@@ -12,6 +11,8 @@ import { LicenseInfo, OutputItem } from './model/LicenseInfo.js';
 import { LicenseBuildReport } from './model/LicenseBuildReport.js';
 import { PackageInfo } from './model/PackageInfo.js';
 import { Recorder } from './Recorder.js';
+import { Policy, LicenseSeverity, buildComplianceReport } from './compliance/index.js';
+import { getDefaultPolicy } from './compliance/presets.js';
 
 export type OutputFormat = 'txt' | 'json' | 'markdown' | 'html';
 
@@ -43,15 +44,29 @@ export interface LicensePluginOptions {
    */
   excludePackages?: (string | ((name: string) => boolean))[];
   /**
-   * Allow only these licenses. When set, the build fails if any bundled
-   * package has a license not in this list.
+   * License compliance policy. Can be a preset name or a Policy object.
+   * When a Policy object is provided, custom allow/review/deny lists
+   * override the preset if preset is also specified.
+   *
+   * @example { preset: "commercial" }
+   * @example { allow: ["MIT"], deny: ["GPL-3.0"] }
    */
-  onlyAllow?: string[];
+  policy?: Policy;
   /**
-   * Fail the build when a bundled package license matches this list.
-   * Evaluated after `onlyAllow`.
+   * How to handle packages with UNKNOWN license.
+   * - 'ignore': treat as PASS
+   * - 'warn': treat as REVIEW (default)
+   * - 'error': treat as FAIL
    */
-  failOn?: string[];
+  unknownLicense?: LicenseSeverity;
+  /**
+   * How to handle packages with missing license information.
+   * - 'ignore': treat as PASS
+   * - 'warn': treat as REVIEW (default)
+   * - 'error': treat as FAIL
+   */
+  missingLicense?: LicenseSeverity;
+
   /**
    * Reuse the in-memory license database across multiple plugin instances
    * (e.g. in multi-compiler setups). Set to `false` to force a fresh scan
@@ -90,10 +105,11 @@ export interface LicensePluginContext {
 
 export class LicensePluginCore {
   readonly options: Required<
-    Omit<LicensePluginOptions, 'recorder' | 'waitForRecorderCount'>
+    Omit<LicensePluginOptions, 'recorder' | 'waitForRecorderCount' | 'policy'>
   > & {
     recorder: Recorder | undefined;
     waitForRecorderCount: number | undefined;
+    policy: Policy;
   };
   private db: LicenseDatabase;
 
@@ -107,13 +123,14 @@ export class LicensePluginCore {
       includeAuthor: options.includeAuthor !== false,
       includePackages: options.includePackages || [],
       excludePackages: options.excludePackages || [],
-      onlyAllow: options.onlyAllow || [],
-      failOn: options.failOn || [],
       cache: options.cache !== false,
       workspaceRoot: options.workspaceRoot || '',
       recorder: options.recorder,
       recordOnly: options.recordOnly === true,
       waitForRecorderCount: options.waitForRecorderCount,
+      policy: options.policy || getDefaultPolicy(),
+      unknownLicense: options.unknownLicense || 'warn',
+      missingLicense: options.missingLicense || 'warn',
     };
     this.db = new LicenseDatabase();
   }
@@ -135,7 +152,7 @@ export class LicensePluginCore {
   async generateLicenseItems(
     packages: Map<string, PackageInfo>,
     context: LicensePluginContext
-  ): Promise<{ items: OutputItem[]; errors: string[] }> {
+  ): Promise<{ items: OutputItem[]; errors: string[]; warnings: string[] }> {
     const entries = this.resolveLicenseEntries(packages);
     
     // Add packages from includePackages that are not already in entries
@@ -150,30 +167,37 @@ export class LicensePluginCore {
       }
     }
     
-    const errors = this.checkCompliance(entries);
+    const report = buildComplianceReport(
+      entries.map((e) => ({ packageName: `${e.info.name}@${e.info.version}`, license: e.licenseInfo.license })),
+      this.options.policy,
+      this.options.unknownLicense as 'ignore' | 'warn' | 'error',
+      this.options.missingLicense as 'ignore' | 'warn' | 'error',
+    );
+
+    for (const w of report.warnings) context.reportWarning(`LicensePlugin: ${w}`);
+    for (const err of report.errors) context.reportError(`LicensePlugin: ${err}`);
 
     let items: OutputItem[];
-    if (errors.length > 0) {
-      for (const err of errors) context.reportError(err);
+    if (report.overall === 'FAIL') {
       this.recordReport([]);
-      return { items: [], errors };
+      return { items: [], errors: report.errors, warnings: report.warnings };
     }
 
     items = this.buildOutputItems(entries);
     this.recordReport(items);
-    if (this.options.recordOnly) return { items: [], errors: [] };
+    if (this.options.recordOnly) return { items: [], errors: [], warnings: report.warnings };
 
     if (this.options.recorder && this.options.waitForRecorderCount !== undefined) {
       try {
         items = this.mergeReports(items, await this.options.recorder.waitForReports(this.options.waitForRecorderCount));
       } catch (error) {
         context.reportError(String(error));
-        return { items: [], errors: [String(error)] };
+        return { items: [], errors: [String(error)], warnings: [] };
       }
     }
 
     items.sort((a, b) => a.package.name.localeCompare(b.package.name));
-    return { items, errors: [] };
+    return { items, errors: [], warnings: report.warnings };
   }
 
   private resolveLicenseEntries(
@@ -262,67 +286,6 @@ export class LicensePluginCore {
     }
     
     return entries;
-  }
-
-  private checkCompliance(
-    entries: Array<{ info: PackageInfo; licenseInfo: LicenseInfo }>
-  ): string[] {
-    const errors: string[] = [];
-    for (const { info, licenseInfo } of entries) {
-      if (this.options.onlyAllow.length > 0 && !this.isAllowed(licenseInfo.license)) {
-        errors.push(
-          `LicensePlugin: License "${licenseInfo.license}" for package "${info.name}@${info.version}" is not in the allowed list: ${this.options.onlyAllow.join(', ')}`
-        );
-      }
-      if (this.options.failOn.length > 0 && this.isFailed(licenseInfo.license)) {
-        errors.push(
-          `LicensePlugin: License "${licenseInfo.license}" for package "${info.name}@${info.version}" is in the fail list`
-        );
-      }
-    }
-    return errors;
-  }
-
-  private isAllowed(license: string): boolean {
-    if (this.options.onlyAllow.includes(license)) return true;
-    const ids = this.parseSpdxIdentifiers(license);
-    if (!ids) return false;
-    if (ids.conjunction === 'and') return ids.identifiers.every((id) => this.options.onlyAllow.includes(id));
-    if (ids.conjunction === 'or') return ids.identifiers.some((id) => this.options.onlyAllow.includes(id));
-    return false;
-  }
-
-  private isFailed(license: string): boolean {
-    if (this.options.failOn.includes(license)) return true;
-    const ids = this.parseSpdxIdentifiers(license);
-    if (!ids) return false;
-    if (ids.conjunction === 'or') return ids.identifiers.every((id) => this.options.failOn.includes(id));
-    return ids.identifiers.some((id) => this.options.failOn.includes(id));
-  }
-
-  private parseSpdxIdentifiers(
-    license: string
-  ): { identifiers: string[]; conjunction: 'and' | 'or' } | null {
-    try {
-      const node = spdxExpressionParse(license);
-      const identifiers: string[] = [];
-      let conjunction: 'and' | 'or' | null = null;
-      const walk = (n: typeof node): void => {
-        if ('license' in n) {
-          identifiers.push((n as { license: string }).license);
-        } else {
-          const expr = n as { left: typeof node; right: typeof node; conjunction: string };
-          if (!conjunction) conjunction = expr.conjunction as 'and' | 'or';
-          walk(expr.left);
-          walk(expr.right);
-        }
-      };
-      walk(node);
-      if (!conjunction) return null;
-      return { identifiers, conjunction };
-    } catch {
-      return null;
-    }
   }
 
   private buildOutputItems(

@@ -4,8 +4,6 @@ import type { LicensePluginOptions, OutputFormat } from './LicensePluginCore.js'
 import { PackageScanner } from './scanner/PackageScanner.js';
 
 export type { LicensePluginOptions, OutputFormat };
-/** @deprecated Use `LicensePluginOptions` instead. */
-export type LicenseWebpackPluginOptions = LicensePluginOptions;
 
 const PLUGIN_NAME = 'LicenseWebpackPlugin';
 const DEFAULT_PROCESS_ASSETS_STAGE_REPORT = 5000;
@@ -68,7 +66,8 @@ export class LicenseWebpackPlugin implements WebpackPluginInstance {
     scanner.setProjectRoot(startPath);
     const packages = scanner.scan(compilation);
 
-    const { items, errors } = await this.core.generateLicenseItems(packages, context);
+    const { items, errors, warnings } = await this.core.generateLicenseItems(packages, context);
+    for (const w of warnings) context.reportWarning(w);
     if (errors.length > 0) return;
 
     const sourcesApi = wp?.sources;

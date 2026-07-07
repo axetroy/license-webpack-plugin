@@ -7,9 +7,11 @@ A bundler-agnostic plugin that generates third-party license notices for package
 - Scans the bundler's module graph for used npm packages
 - Reads license metadata using the built-in license checker (zero external dependencies)
 - Emits TXT, JSON, Markdown, or HTML assets at build time
-- Supports compliance rules with `onlyAllow` and `failOn`
+- Supports compliance rules with built-in presets (`commercial`, `permissive`, `enterprise`, `oss`, `strict`, `none`)
+- Custom policy with `allow`, `review`, `deny` lists
+- Configurable severity for unknown/missing licenses
+- Respects SPDX License Expressions (`MIT OR GPL-2.0`, `MIT AND Apache-2.0`)
 - Filter by package name and/or license type
-- Deduplicates repeated license text
 - Works with webpack 5, Rspack, and Vite
 
 ## Installation
@@ -35,7 +37,7 @@ module.exports = {
       filename: 'third-party-licenses.txt',
       format: 'txt',
       includeLicenseText: true,
-      onlyAllow: ['MIT', 'Apache-2.0', 'BSD-3-Clause'],
+      policy: { preset: 'commercial' },
     }),
   ],
 };
@@ -62,16 +64,17 @@ export default defineConfig({
 ## Options
 
 | Option | Type | Default | Description |
-|---|---|---|---|
+|---|---|---|---|---|
 | `filename` | `string` | `licenses.txt` | Output asset name |
 | `format` | `'txt' \| 'json' \| 'markdown' \| 'html'` | `txt` | Output format |
 | `includeLicenseText` | `boolean` | `true` | Include license text when supported |
 | `includeRepository` | `boolean` | `true` | Include repository URLs |
 | `includeHomepage` | `boolean` | `true` | Include homepage URLs |
 | `includeAuthor` | `boolean` | `true` | Include author/publisher details |
-| `excludePackages` | `string[]` | `[]` | Exclude listed packages from output |
-| `onlyAllow` | `string[]` | `[]` | Fail build when a used license is not allowed |
-| `failOn` | `string[]` | `[]` | Fail build when a used license matches the list |
+| `excludePackages` | `(string \| Function)[]` | `[]` | Exclude listed packages from output |
+| `policy` | `Policy \| string` | `{ preset: "commercial" }` | License compliance policy |
+| `unknownLicense` | `'ignore' \| 'warn' \| 'error'` | `'warn'` | How to handle UNKNOWN licenses |
+| `missingLicense` | `'ignore' \| 'warn' \| 'error'` | `'warn'` | How to handle packages with no license info |
 | `cache` | `boolean` | `true` | Reuse the in-memory license database |
 | `workspaceRoot` | `string` | Bundler's root context | Root path for license scanning |
 | `recorder` | `Recorder` | — | External recorder shared across compiler instances (webpack only) |
@@ -89,44 +92,21 @@ The plugin uses a **two-phase** architecture:
 
 Only packages that appear in the bundler's output are included in the license asset. DevDependencies that are never imported will not appear.
 
-## Filtering dependencies by package or license
+## Filtering dependencies by package name
 
-The plugin starts with the set of dependency entries detected from the bundler's module graph, resolves license metadata for those entries, and then applies the configured filters. Package names and license names are matched with exact, case-sensitive string comparison.
-
-### Filter options
-
-- `excludePackages`: remove entries whose package name is listed.
-- `onlyAllow`: fail the build if a package license is not in the allowed list.
-- `failOn`: fail the build if a package license matches the list.
-
-### Evaluation order
-
-1. `excludePackages`
-2. `onlyAllow`
-3. `failOn`
-
-All bundled packages are included by default. `excludePackages` removes unwanted entries first, then `onlyAllow` and `failOn` enforce license policies — generating build errors and stopping output when violated.
+The plugin starts with the set of dependency entries detected from the bundler's module graph, resolves license metadata for those entries, and then applies `excludePackages`. Package names are matched with exact, case-sensitive string comparison, or via a predicate function.
 
 ### Transitive dependency behavior
 
 `excludePackages` is entry-based. Excluding `foo` removes the `foo` entry itself, but it does not automatically remove every dependency that `foo` depends on.
 
-### Combined filter example
+### Example
 
 ```js
 new LicenseWebpackPlugin({
   excludePackages: ['react-dom'],
-  onlyAllow: ['MIT'],
-  failOn: ['MIT-0'],
 });
 ```
-
-With this configuration:
-
-- all bundled packages are included by default
-- `react-dom` is removed from output
-- it fails the build if any remaining package does not have an MIT license
-- it fails the build if any remaining package has an MIT-0 license
 
 ## Output formats
 
@@ -142,15 +122,99 @@ Useful for GitHub releases or repository documentation.
 ### HTML
 Useful for Electron about pages and in-app license views.
 
-## Compliance examples
+## License Compliance
+
+The plugin includes a built-in compliance engine that evaluates each bundled package's license against a configurable **Policy**. Each package gets one of three statuses:
+
+| Status   | Description                     |
+|----------|---------------------------------|
+| `PASS`   | License satisfies the policy    |
+| `REVIEW` | Requires manual review          |
+| `FAIL`   | License does not comply         |
+
+The overall build result follows the worst status: any `FAIL` stops the build; `REVIEW` packages produce warnings (but do not fail).
+
+### Policy
+
+A `Policy` can reference a built-in preset, or define custom `allow`/`review`/`deny` lists. Custom lists override the preset when both are given.
+
+```ts
+interface Policy {
+  preset?: Preset;
+  allow?: string[];   // licenses that always PASS
+  review?: string[];  // licenses flagged for manual review
+  deny?: string[];    // licenses that FAIL
+}
+```
+
+#### Built-in presets
+
+| Preset       | Description                                      |
+|--------------|--------------------------------------------------|
+| `commercial` | Default. Permissive + weak copyleft allowed; strong copyleft denied |
+| `permissive` | Only permissive licenses allowed; everything else requires review |
+| `enterprise` | Only permissive licenses allowed; all copyleft denied (strong + weak) |
+| `oss`        | All licenses allowed (no restrictions)           |
+| `strict`     | Whitelist mode. Only `allow`-listed licenses pass; everything else fails |
+| `none`       | No compliance checks (all packages pass)         |
+
+#### Preset license categories
+
+| Category        | Licenses                                                                                        |
+|-----------------|-------------------------------------------------------------------------------------------------|
+| **Permissive**  | MIT, MIT-0, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, CC0-1.0, Unlicense, 0BSD, BSL-1.0, Zlib, Artistic-2.0, Python-2.0, WTFPL, CC-BY-4.0, BlueOak-1.0.0, Unicode-DFS-2015, NCSA |
+| **Weak copyleft** | LGPL-2.1, LGPL-3.0, MPL-2.0, EPL-1.0, EPL-2.0, CDDL-1.0, EUPL-1.2, PostgreSQL                |
+| **Strong copyleft** | GPL-2.0, GPL-3.0, AGPL-1.0, AGPL-3.0, SSPL-1.0, OSL-3.0, RPL-1.5                            |
+
+### Examples
+
+```js
+// Use a preset
+new LicenseWebpackPlugin({
+  policy: { preset: 'commercial' },
+});
+
+// Custom allow/deny lists
+new LicenseWebpackPlugin({
+  policy: {
+    allow: ['MIT', 'Apache-2.0'],
+    deny: ['GPL-3.0', 'AGPL-3.0'],
+  },
+});
+
+// Override preset with custom lists
+new LicenseWebpackPlugin({
+  policy: {
+    preset: 'commercial',
+    allow: ['MIT', 'Apache-2.0'],  // overrides the preset's allow list
+  },
+});
+
+// Whitelist mode (strict)
+new LicenseWebpackPlugin({
+  policy: { preset: 'strict', allow: ['MIT', 'Apache-2.0'] },
+});
+```
+
+### SPDX Expressions
+
+The engine fully respects SPDX License Expressions:
+
+- `MIT OR GPL-2.0` — passes if **any** alternative is allowed
+- `MIT AND GPL-2.0` — passes only if **all** licenses are allowed
+- `MIT WITH LLVM-exception` — exception is handled per SPDX spec
+
+### Unknown / missing licenses
+
+| Option | Values | Default | Description |
+|---|---|---|---|
+| `unknownLicense` | `'ignore'` / `'warn'` / `'error'` | `'warn'` | How to treat UNKNOWN licenses |
+| `missingLicense` | `'ignore'` / `'warn'` / `'error'` | `'warn'` | How to treat packages without license info |
 
 ```js
 new LicenseWebpackPlugin({
-  onlyAllow: ['MIT', 'Apache-2.0'],
-});
-
-new LicenseWebpackPlugin({
-  failOn: ['GPL-3.0', 'AGPL-3.0'],
+  unknownLicense: 'error',   // fail on unknown licenses
+  missingLicense: 'ignore',  // silently skip packages with no license field
 });
 ```
 

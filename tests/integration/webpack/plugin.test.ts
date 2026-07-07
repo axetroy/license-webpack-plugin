@@ -37,16 +37,7 @@ const CORE_UTIL_IS_DIR = path.join(WORKSPACE_ROOT, 'node_modules', 'core-util-is
 
 describe('LicenseWebpackPlugin integration', () => {
   afterAll(() => {
-    fs.rmSync(path.resolve(__dirname, 'output', 'txt'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'json'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'include-license-text-true'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'include-license-text-false'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'production-only'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'only-allow-pass'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'only-allow-fail'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'fail-on-fail'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'fail-on-pass'), { recursive: true, force: true });
-    fs.rmSync(path.resolve(__dirname, 'output', 'core-util-is-txt'), { recursive: true, force: true });
+    fs.rmSync(path.resolve(__dirname, 'output'), { recursive: true, force: true });
     fs.rmSync(CORE_UTIL_IS_DIR, { recursive: true, force: true });
   });
 
@@ -209,9 +200,12 @@ describe('LicenseWebpackPlugin integration', () => {
     expect(content).not.toContain('Copyright OpenJS Foundation');
   });
 
-  describe('onlyAllow', () => {
+  // These are now expressed via the `policy` option.
+  // - onlyAllow → { preset: 'strict', allow: [...] }
+  // - failOn    → { deny: [...] }
+  describe('policy strict (replaces onlyAllow)', () => {
     it('passes when all bundled packages have an allowed license', async () => {
-      const outputPath = prepareOutputDir('only-allow-pass');
+      const outputPath = prepareOutputDir('policy-strict-pass');
 
       const stats = await runWebpack({
         mode: 'development',
@@ -221,7 +215,7 @@ describe('LicenseWebpackPlugin integration', () => {
           new LicenseWebpackPlugin({
             filename: 'licenses.json',
             format: 'json',
-            onlyAllow: ['MIT'],
+            policy: { preset: 'strict', allow: ['MIT'] },
             workspaceRoot: path.resolve(__dirname, '../../..'),
           }),
         ],
@@ -235,7 +229,7 @@ describe('LicenseWebpackPlugin integration', () => {
     });
 
     it('fails when a bundled package license is not in the allow list', async () => {
-      const outputPath = prepareOutputDir('only-allow-fail');
+      const outputPath = prepareOutputDir('policy-strict-fail');
 
       const stats = await runWebpack({
         mode: 'development',
@@ -245,7 +239,7 @@ describe('LicenseWebpackPlugin integration', () => {
           new LicenseWebpackPlugin({
             filename: 'licenses.json',
             format: 'json',
-            onlyAllow: ['Apache-2.0'],
+            policy: { preset: 'strict', allow: ['Apache-2.0'] },
             workspaceRoot: path.resolve(__dirname, '../../..'),
           }),
         ],
@@ -256,9 +250,9 @@ describe('LicenseWebpackPlugin integration', () => {
     });
   });
 
-  describe('failOn', () => {
-    it('fails when a bundled package license matches the fail list', async () => {
-      const outputPath = prepareOutputDir('fail-on-fail');
+  describe('policy deny (replaces failOn)', () => {
+    it('fails when a bundled package license matches the deny list', async () => {
+      const outputPath = prepareOutputDir('policy-deny-fail2');
 
       const stats = await runWebpack({
         mode: 'development',
@@ -268,7 +262,7 @@ describe('LicenseWebpackPlugin integration', () => {
           new LicenseWebpackPlugin({
             filename: 'licenses.json',
             format: 'json',
-            failOn: ['MIT'],
+            policy: { deny: ['MIT'] },
             workspaceRoot: path.resolve(__dirname, '../../..'),
           }),
         ],
@@ -278,8 +272,8 @@ describe('LicenseWebpackPlugin integration', () => {
       expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
     });
 
-    it('passes when no bundled package license matches the fail list', async () => {
-      const outputPath = prepareOutputDir('fail-on-pass');
+    it('passes when no bundled package license matches the deny list', async () => {
+      const outputPath = prepareOutputDir('policy-deny-pass');
 
       const stats = await runWebpack({
         mode: 'development',
@@ -289,7 +283,7 @@ describe('LicenseWebpackPlugin integration', () => {
           new LicenseWebpackPlugin({
             filename: 'licenses.json',
             format: 'json',
-            failOn: ['Apache-2.0'],
+            policy: { deny: ['Apache-2.0'] },
             workspaceRoot: path.resolve(__dirname, '../../..'),
           }),
         ],
@@ -300,6 +294,120 @@ describe('LicenseWebpackPlugin integration', () => {
       expect(fs.existsSync(licenseFile)).toBe(true);
       const parsed = JSON.parse(fs.readFileSync(licenseFile, 'utf-8')) as Array<{ name: string }>;
       expect(parsed.some((item) => item.name === 'lodash')).toBe(true);
+    });
+  });
+
+  describe('policy option', () => {
+    it('commercial preset passes when package has MIT license', async () => {
+      const outputPath = prepareOutputDir('policy-commercial-pass');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { preset: 'commercial' },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(false);
+      const licenseFile = path.join(outputPath, 'licenses.json');
+      expect(fs.existsSync(licenseFile)).toBe(true);
+    });
+
+    it('commercial preset fails when package has denied license (GPL)', async () => {
+      const outputPath = prepareOutputDir('policy-commercial-fail');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            // deny MIT so lodash fails
+            policy: { preset: 'commercial', deny: ['MIT'] },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(true);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
+    });
+
+    it('custom allow list works with policy option', async () => {
+      const outputPath = prepareOutputDir('policy-allow-pass');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { allow: ['MIT'] },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(false);
+      const licenseFile = path.join(outputPath, 'licenses.json');
+      expect(fs.existsSync(licenseFile)).toBe(true);
+    });
+
+    it('custom deny list fails when package license is denied', async () => {
+      const outputPath = prepareOutputDir('policy-deny-fail');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            policy: { deny: ['MIT'] },
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(true);
+      expect(fs.existsSync(path.join(outputPath, 'licenses.json'))).toBe(false);
+    });
+
+  });
+
+  describe('unknownLicense option', () => {
+    it('ignore allows unknown license packages to pass', async () => {
+      const outputPath = prepareOutputDir('unknown-license-ignore');
+
+      const stats = await runWebpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../fixtures/entry.js'),
+        output: { path: outputPath, filename: 'bundle.js' },
+        plugins: [
+          new LicenseWebpackPlugin({
+            filename: 'licenses.json',
+            format: 'json',
+            unknownLicense: 'ignore',
+            workspaceRoot: path.resolve(__dirname, '../../..'),
+          }),
+        ],
+      });
+
+      expect(stats.hasErrors()).toBe(false);
+      const licenseFile = path.join(outputPath, 'licenses.json');
+      expect(fs.existsSync(licenseFile)).toBe(true);
     });
   });
 

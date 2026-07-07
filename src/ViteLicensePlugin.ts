@@ -57,10 +57,13 @@ export function viteLicensePlugin(options: LicensePluginOptions = {}): VitePlugi
         reportWarning: (msg: string) => warnings.push(msg),
       };
 
-      const { items, errors: returnedErrors } = await core.generateLicenseItems(resolvedPackages, context);
+      const { items, errors: returnedErrors, warnings: returnedWarnings } = await core.generateLicenseItems(resolvedPackages, context);
       const allErrors = errors.concat(returnedErrors);
       if (allErrors.length > 0) {
         throw new Error(allErrors.join('\n'));
+      }
+      for (const w of returnedWarnings) {
+        console.warn(`[${PLUGIN_NAME}] ${w}`);
       }
 
       const source = core.format(items);

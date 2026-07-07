@@ -1,0 +1,103 @@
+import { Preset, Policy } from './types.js';
+
+const PERMISSIVE_LICENSES = [
+  'MIT',
+  'MIT-0',
+  'Apache-2.0',
+  'BSD-2-Clause',
+  'BSD-3-Clause',
+  'ISC',
+  'CC0-1.0',
+  'Unlicense',
+  '0BSD',
+  'BSL-1.0',
+  'Zlib',
+  'Artistic-2.0',
+  'Python-2.0',
+  'WTFPL',
+  'CC-BY-4.0',
+  'BlueOak-1.0.0',
+  'Unicode-DFS-2015',
+  'NCSA',
+];
+
+const WEAK_COPYLEFT = [
+  'LGPL-2.1',
+  'LGPL-3.0',
+  'MPL-2.0',
+  'EPL-1.0',
+  'EPL-2.0',
+  'CDDL-1.0',
+  'EUPL-1.2',
+  'PostgreSQL',
+];
+
+const STRONG_COPYLEFT = [
+  'GPL-2.0',
+  'GPL-3.0',
+  'AGPL-1.0',
+  'AGPL-3.0',
+  'SSPL-1.0',
+  'OSL-3.0',
+  'RPL-1.5',
+];
+
+const presetDefinitions: Record<Preset, Policy> = {
+  none: {
+    allow: [],
+    review: [],
+    deny: [],
+  },
+
+  permissive: {
+    allow: [...PERMISSIVE_LICENSES],
+    review: [],
+    deny: [],
+  },
+
+  commercial: {
+    allow: [...PERMISSIVE_LICENSES, ...WEAK_COPYLEFT],
+    review: [],
+    deny: [...STRONG_COPYLEFT],
+  },
+
+  enterprise: {
+    allow: [...PERMISSIVE_LICENSES],
+    review: [],
+    deny: [...STRONG_COPYLEFT, ...WEAK_COPYLEFT],
+  },
+
+  oss: {
+    allow: [],
+    review: [],
+    deny: [],
+  },
+
+  strict: {
+    allow: [],
+    review: [],
+    deny: [],
+  },
+};
+
+export type ResolvedPolicy = Required<Omit<Policy, 'preset'>> & { preset: Preset | undefined };
+
+export function resolvePolicy(policy: Policy): ResolvedPolicy {
+  const def = policy.preset ? presetDefinitions[policy.preset] : { allow: [] as string[], review: [] as string[], deny: [] as string[] };
+  const base: ResolvedPolicy = {
+    preset: policy.preset || undefined,
+    allow: def.allow || [],
+    review: def.review || [],
+    deny: def.deny || [],
+  };
+
+  if (policy.allow) base.allow = policy.allow;
+  if (policy.review) base.review = policy.review;
+  if (policy.deny) base.deny = policy.deny;
+
+  return base;
+}
+
+export function getDefaultPolicy(): Policy {
+  return { preset: 'commercial' };
+}
